@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import logging
@@ -21,76 +20,88 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 
-# ------------------ Definição de states pra navegação -----------------------
+# ------------------ Generic names for states navigation -----------------------
 
 
-states_letters = ['Aa', 'Ab', 'Ac', 'Ad', 'Ae', 'Af', 'Ag', 'Ah', 'Ai', 'Aj', 'Ak', 'Al', 'Am', 'An', 'Ao', 'Ap', 'Aq', 'Ar', 'As', 'At', 'Au', 'Av', 'Aw', 'Ax', 'Ay', 'Az', 'Ba', 'Bb', 'Bc', 'Bd', 'Be', 'Bf', 'Bg', 'Bh', 'Bi', 'Bj', 'Bk', 'Bl', 'Bm', 'Bn', 'Bo', 'Bp', 'Bq', 'Br', 'Bs', 'Bt', 'Bu', 'Bv', 'Bw', 'Bx', 'By', 'Bz', 'Ca', 'Cb', 'Cc', 'Cd', 'Ce', 'Cf', 'Cg', 'Ch', 'Ci', 'Cj', 'Ck', 'Cl', 'Cm', 'Cn', 'Co', 'Cp', 'Cq', 'Cr', 'Cs', 'Ct', 'Cu', 'Cv', 'Cw', 'Cx', 'Cy', 'Cz', 'Da', 'Db', 'Dc', 'Dd', 'De', 'Df', 'Dg', 'Dh', 'Di', 'Dj', 'Dk', 'Dl', 'Dm', 'Dn', 'Do', 'Dp', 'Dq', 'Dr', 'Ds', 'Dt', 'Du', 'Dv', 'Dw', 'Dx', 'Dy', 'Dz', 'Ea', 'Eb', 'Ec', 'Ed', 'Ee', 'Ef', 'Eg', 'Eh', 'Ei', 'Ej', 'Ek', 'El', 'Em', 'En', 'Eo', 'Ep', 'Eq', 'Er', 'Es', 'Et', 'Eu', 'Ev', 'Ew', 'Ex', 'Ey', 'Ez', 'Fa', 'Fb', 'Fc', 'Fd', 'Fe', 'Ff', 'Fg', 'Fh', 'Fi', 'Fj', 'Fk', 'Fl', 'Fm', 'Fn', 'Fo', 'Fp', 'Fq', 'Fr', 'Fs', 'Ft', 'Fu', 'Fv', 'Fw', 'Fx', 'Fy', 'Fz', 'Ga', 'Gb', 'Gc', 'Gd', 'Ge', 'Gf', 'Gg', 'Gh', 'Gi', 'Gj', 'Gk', 'Gl', 'Gm', 'Gn', 'Go', 'Gp', 'Gq', 'Gr', 'Gs', 'Gt', 'Gu', 'Gv', 'Gw', 'Gx', 'Gy', 'Gz', 'Ha', 'Hb', 'Hc', 'Hd', 'He', 'Hf', 'Hg', 'Hh', 'Hi', 'Hj', 'Hk', 'Hl', 'Hm', 'Hn', 'Ho', 'Hp', 'Hq', 'Hr', 'Hs', 'Ht', 'Hu', 'Hv', 'Hw', 'Hx', 'Hy', 'Hz', 'Ia', 'Ib', 'Ic', 'Id', 'Ie', 'If', 'Ig', 'Ih', 'Ii', 'Ij', 'Ik', 'Il', 'Im', 'In', 'Io', 'Ip', 'Iq', 'Ir', 'Is', 'It', 'Iu', 'Iv', 'Iw', 'Ix', 'Iy', 'Iz', 'Ja', 'Jb', 'Jc', 'Jd', 'Je', 'Jf', 'Jg', 'Jh', 'Ji', 'Jj', 'Jk', 'Jl', 'Jm', 'Jn', 'Jo', 'Jp', 'Jq', 'Jr', 'Js', 'Jt', 'Ju', 'Jv', 'Jw', 'Jx', 'Jy', 'Jz', 'Ka', 'Kb', 'Kc', 'Kd', 'Ke', 'Kf', 'Kg', 'Kh', 'Ki', 'Kj', 'Kk', 'Kl', 'Km', 'Kn', 'Ko', 'Kp', 'Kq', 'Kr', 'Ks', 'Kt', 'Ku', 'Kv', 'Kw', 'Kx', 'Ky', 'Kz', 'La', 'Lb', 'Lc', 'Ld', 'Le', 'Lf', 'Lg', 'Lh', 'Li', 'Lj', 'Lk', 'Ll', 'Lm', 'Ln', 'Lo', 'Lp', 'Lq', 'Lr', 'Ls', 'Lt', 'Lu', 'Lv', 'Lw', 'Lx', 'Ly', 'Lz', 'Ma', 'Mb', 'Mc', 'Md', 'Me', 'Mf', 'Mg', 'Mh', 'Mi', 'Mj', 'Mk', 'Ml', 'Mm', 'Mn', 'Mo', 'Mp', 'Mq', 'Mr', 'Ms', 'Mt', 'Mu', 'Mv', 'Mw', 'Mx', 'My', 'Mz', 'Na', 'Nb', 'Nc', 'Nd', 'Ne', 'Nf', 'Ng', 'Nh', 'Ni', 'Nj', 'Nk', 'Nl', 'Nm', 'Nn', 'No', 'Np', 'Nq', 'Nr', 'Ns', 'Nt', 'Nu', 'Nv', 'Nw', 'Nx', 'Ny', 'Nz', 'Oa', 'Ob', 'Oc', 'Od', 'Oe', 'Of', 'Og', 'Oh', 'Oi', 'Oj', 'Ok', 'Ol', 'Om', 'On', 'Oo', 'Op', 'Oq', 'Or', 'Os', 'Ot', 'Ou', 'Ov', 'Ow', 'Ox', 'Oy', 'Oz', 'Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph', 'Pi', 'Pj', 'Pk', 'Pl', 'Pm', 'Pn', 'Po', 'Pp', 'Pq', 'Pr', 'Ps', 'Pt', 'Pu', 'Pv', 'Pw', 'Px', 'Py', 'Pz', 'Qa', 'Qb', 'Qc', 'Qd', 'Qe', 'Qf', 'Qg', 'Qh', 'Qi', 'Qj', 'Qk', 'Ql', 'Qm', 'Qn', 'Qo', 'Qp', 'Qq', 'Qr', 'Qs', 'Qt', 'Qu', 'Qv', 'Qw', 'Qx', 'Qy', 'Qz', 'Ra', 'Rb', 'Rc', 'Rd', 'Re', 'Rf', 'Rg', 'Rh', 'Ri', 'Rj', 'Rk', 'Rl', 'Rm', 'Rn', 'Ro', 'Rp', 'Rq', 'Rr', 'Rs', 'Rt', 'Ru', 'Rv', 'Rw', 'Rx', 'Ry', 'Rz', 'Sa', 'Sb', 'Sc', 'Sd', 'Se', 'Sf', 'Sg', 'Sh', 'Si', 'Sj', 'Sk', 'Sl', 'Sm', 'Sn', 'So', 'Sp', 'Sq', 'Sr', 'Ss', 'St', 'Su', 'Sv', 'Sw', 'Sx', 'Sy', 'Sz', 'Ta', 'Tb', 'Tc', 'Td', 'Te', 'Tf', 'Tg', 'Th', 'Ti', 'Tj', 'Tk', 'Tl', 'Tm', 'Tn', 'To', 'Tp', 'Tq', 'Tr', 'Ts', 'Tt', 'Tu', 'Tv', 'Tw', 'Tx', 'Ty', 'Tz', 'Ua', 'Ub', 'Uc', 'Ud', 'Ue', 'Uf', 'Ug', 'Uh', 'Ui', 'Uj', 'Uk', 'Ul', 'Um', 'Un', 'Uo', 'Up', 'Uq', 'Ur', 'Us', 'Ut', 'Uu', 'Uv', 'Uw', 'Ux', 'Uy', 'Uz', 'Va', 'Vb', 'Vc', 'Vd', 'Ve', 'Vf', 'Vg', 'Vh', 'Vi', 'Vj', 'Vk', 'Vl', 'Vm', 'Vn', 'Vo', 'Vp', 'Vq', 'Vr', 'Vs', 'Vt', 'Vu', 'Vv', 'Vw', 'Vx', 'Vy', 'Vz', 'Wa', 'Wb', 'Wc', 'Wd', 'We', 'Wf', 'Wg', 'Wh', 'Wi', 'Wj', 'Wk', 'Wl', 'Wm', 'Wn', 'Wo', 'Wp', 'Wq', 'Wr', 'Ws', 'Wt', 'Wu', 'Wv', 'Ww', 'Wx', 'Wy', 'Wz', 'Xa', 'Xb', 'Xc', 'Xd', 'Xe', 'Xf', 'Xg', 'Xh', 'Xi', 'Xj', 'Xk', 'Xl', 'Xm', 'Xn', 'Xo', 'Xp', 'Xq', 'Xr', 'Xs', 'Xt', 'Xu', 'Xv', 'Xw', 'Xx', 'Xy', 'Xz', 'Ya', 'Yb', 'Yc', 'Yd', 'Ye', 'Yf', 'Yg', 'Yh', 'Yi', 'Yj', 'Yk', 'Yl', 'Ym', 'Yn', 'Yo', 'Yp', 'Yq', 'Yr', 'Ys', 'Yt', 'Yu', 'Yv', 'Yw', 'Yx', 'Yy', 'Yz', 'Za', 'Zb', 'Zc', 'Zd', 'Ze', 'Zf', 'Zg', 'Zh', 'Zi', 'Zj', 'Zk', 'Zl', 'Zm', 'Zn', 'Zo', 'Zp', 'Zq', 'Zr', 'Zs', 'Zt', 'Zu', 'Zv', 'Zw', 'Zx', 'Zy', 'Zz']
+states_letters = [
+    'Aa', 'Ab', 'Ac', 'Ad', 'Ae', 'Af', 'Ag', 'Ah', 'Ai', 'Aj', 'Ak', 'Al', 'Am', 
+    'An', 'Ao', 'Ap', 'Aq', 'Ar', 'As', 'At', 'Au', 'Av', 'Aw', 'Ax', 'Ay', 'Az', 
+    'Ba', 'Bb', 'Bc', 'Bd', 'Be', 'Bf', 'Bg', 'Bh', 'Bi', 'Bj', 'Bk', 'Bl', 'Bm', 
+    'Bn', 'Bo', 'Bp', 'Bq', 'Br', 'Bs', 'Bt', 'Bu', 'Bv', 'Bw', 'Bx', 'By', 'Bz', 
+    'Ca', 'Cb', 'Cc', 'Cd', 'Ce', 'Cf', 'Cg', 'Ch', 'Ci', 'Cj', 'Ck', 'Cl', 'Cm', 
+    'Cn', 'Co', 'Cp', 'Cq', 'Cr', 'Cs', 'Ct', 'Cu', 'Cv', 'Cw', 'Cx', 'Cy', 'Cz', 
+    'Da', 'Db', 'Dc', 'Dd', 'De', 'Df', 'Dg', 'Dh', 'Di', 'Dj', 'Dk', 'Dl', 'Dm', 
+    'Dn', 'Do', 'Dp', 'Dq', 'Dr', 'Ds', 'Dt', 'Du', 'Dv', 'Dw', 'Dx', 'Dy', 'Dz', 
+    'Ea', 'Eb', 'Ec', 'Ed', 'Ee', 'Ef', 'Eg', 'Eh', 'Ei', 'Ej', 'Ek', 'El', 'Em', 
+    'En', 'Eo', 'Ep', 'Eq', 'Er', 'Es', 'Et', 'Eu', 'Ev', 'Ew', 'Ex', 'Ey', 'Ez', 
+    'Fa', 'Fb', 'Fc', 'Fd', 'Fe', 'Ff', 'Fg', 'Fh', 'Fi', 'Fj', 'Fk', 'Fl', 'Fm', 
+    'Fn', 'Fo', 'Fp', 'Fq', 'Fr', 'Fs', 'Ft', 'Fu', 'Fv', 'Fw', 'Fx', 'Fy', 'Fz'
+]
+
 num_states = 0
 # Menu
 x = 6
-MENU_RADAR, MENU_CARTEIRA, MENU_CAPITAL, MENU_INFO, \
-    MENU_CONFIG, MENU_AJUDA = states_letters[:num_states + x]
+MENU_RADAR, MENU_TRACK, MENU_PORTF, MENU_INFO, \
+    MENU_SET, MENU_HELP = states_letters[:num_states + x]
 num_states += x
 # Radar
 x = 5
-RADAR_SM_DI, RADAR_SM_SEM, RADAR_MI_DI, RADAR_MI_SEM, \
+RADAR_SM_DAY, RADAR_SM_WEEK, RADAR_MI_DAY, RADAR_MI_WEEK, \
     RADAR_ORDER = states_letters[num_states : num_states + x]
 num_states += x
-# Carteira
+# Tickers tracking
 x = 3
-CARTEIRA_ADD, CARTEIRA_REM, CARTEIRA_RET_ALERTA = states_letters[num_states : num_states + x]
+TRACK_ADD, TRACK_REM, TRACK_WARN_REM = states_letters[num_states : num_states + x]
 num_states += x
-# Capital
+# Portfolio
 x = 4
-CAPITAL_ADD, CAPITAL_SUBTR, CAPITAL_SUBST, CAPITAL_ZER = states_letters[num_states : num_states + x]
+PORTF_ADD, PORTF_SUBTR, PORTF_SUBST, PORTF_CLEAR = states_letters[num_states : num_states + x]
 num_states += x
 # Info
 x = 1
 INFO = states_letters[num_states : num_states + x]
 num_states += x
-# Configurações
+# Settings
 x = 3
-CONFIG_HORA, CONFIG_MODE, CONFIG_RISCO = states_letters[num_states : num_states + x]
+SET_TIME, SET_MODE, SET_RISK = states_letters[num_states : num_states + x]
 num_states += x
-# Config de hora
+# Time settings
 x = 2
-HORA_MUDAR, HORA_ACT_DEACT = states_letters[num_states : num_states + x]
+TIME_CHANGE, TIME_ACT_DEACT = states_letters[num_states : num_states + x]
 num_states += x
-# Config de modo de radar para a carteira
+# Tracker radar mode settings
 x = 4 
-MODE_SM_DI, MODE_SM_SEM, MODE_MI_DI, MODE_MI_SEM = states_letters[num_states : num_states + x]
+MODE_SM_DAY, MODE_SM_WEEK, MODE_MI_DAY, MODE_MI_WEEK = states_letters[num_states : num_states + x]
 num_states += x
-# Config de gerenciamento de risco
+# Risk management settings
 x = 2
-RISCO_BLOQ, RISCO_PORC = states_letters[num_states : num_states + x]
+RISK_BLOCK, RISK_PERC = states_letters[num_states : num_states + x]
 num_states += x
-# Ajuda
+# Help
 x = 6
-AJ_COMO_FUNC, AJ_NUMEROS, AJ_COMPRA, AJ_CONFIGS, \
-    AJ_CONTATO, AJ_SELECIONANDO = states_letters[num_states : num_states + x]
+HP_HDIW, HP_NUMS, HP_BUY, HP_SET, \
+    HP_CONTACT, HP_SELECT = states_letters[num_states : num_states + x]
 num_states += x
-# Estados de admin e config iniciais
+# Admin states and initial settings
 x = 9
-ADMIN_B, ADMIN_C, ADMIN_D, CONFIGS_INI_A, CONFIGS_INI_B, CONFIGS_INI_C, \
-    CONFIGS_INI_D, CONFIGS_INI_E, CONFIGS_INI_F = states_letters[num_states : num_states + x]
+ADMIN_B, ADMIN_C, ADMIN_D, INIT_SET_A, INIT_SET_B, INIT_SET_C, \
+    INIT_SET_D, INIT_SET_E, INIT_SET_F = states_letters[num_states : num_states + x]
 num_states += x
-# Meta estados
+# Meta states
 x = 5
-MENU, START_OVER, LEVEL_ANTERIOR, SAINDO, SAIR = states_letters[num_states : num_states + x]
+MENU, START_OVER, PREV_LEVEL, EXITING, EXIT = states_letters[num_states : num_states + x]
 num_states += x
-# Atalho para ConvHandler.END
-FIM = ConversationHandler.END
+# Shortcut to ConvHandler.END
+STOP = ConversationHandler.END
 
 
-# ------------------ Funcionamento do bot -----------------------
+# ------------------ Bot initialization -----------------------
 
-
-dbname = 'DBDonchian.sqlite'
 db = DBHelper()
 fc = Functions()
-db.setup(dbname)
+db.setup()
 # ADMINS: [Daniel Moreira]
-LIST_OF_ADMINS = [545699841]
+ADMS_LIST = [545699841]
 
 
 def read_token(config):
@@ -99,7 +110,7 @@ def read_token(config):
     return parser.get('creds', 'token')
 
 
-TOKEN = read_token('config.cfg')
+TOKEN = read_token('hidden/config.cfg')
 remove_keyboard = {'remove_keyboard':True}
 RKR = json.dumps(remove_keyboard)
 def send_msg(user, msg, msg_id='', reply_markup=''):
@@ -112,7 +123,7 @@ def restricted(func):
     @wraps(func)
     def wrapped(update, context, *args, **kwargs):
         user_id = update.effective_user.id
-        if user_id not in LIST_OF_ADMINS:
+        if user_id not in ADMS_LIST:
             text = 'Unauthorized access'
             send_msg(user_id, text)
             return
@@ -132,17 +143,17 @@ def start(update, context):
     if user_type == 'group' or is_bot:
         context.bot.leaveChat(chat_id=user_id)
     else:
-        text = fc.func_user_start(user_id, name, username, dbname)
+        text = fc.func_user_start(user_id, name, username)
         if text:
             send_msg(user_id, text)
         else:
             admin_text = f'Novo usuário:\nuser_id: {user_id}\nname: {name}\nusername: @{username}\n'
-            send_msg(LIST_OF_ADMINS[0], admin_text)
+            send_msg(ADMS_LIST[0], admin_text)
 
             user_text = 'Bem-vindo, investidor! Por favor, aguarde enquanto preparamos tudo.'
             send_msg(user_id, user_text)
 
-
+# função inútil até agora
 def enviar_id(update, context):
     user_id = update.message.chat_id
     f_name = update.message.chat.first_name
@@ -151,12 +162,13 @@ def enviar_id(update, context):
     username = update.message.chat.username
 
     admin_text = f'Usuário mandou:\nuser_id: {user_id}\nname: {name}\nusername: @{username}\n'
-    send_msg(LIST_OF_ADMINS[0], admin_text)
+    send_msg(ADMS_LIST[0], admin_text)
 
 
 @restricted
 def admin_a(update, context):
-    admin_id = update.message.chat_id
+    global curr_admin_id
+    curr_admin_id = update.message.chat_id
     msg_id = update.message.message_id
 
     text = 'Selecione uma das opções de adm ou clique em /cancelar:'
@@ -170,7 +182,7 @@ def admin_a(update, context):
     reply_markup = {'keyboard': opts, 'one_time_keyboard': True}
     k = json.dumps(reply_markup)
 
-    send_msg(admin_id, text, msg_id, k)
+    send_msg(curr_admin_id, text, msg_id, k)
     # Configurações rápidas:
     # Qual classe de ações você irá utilizar com mais frequência? Small/Mid
     # Qual escala temporal você prefere? Diário/Semanal
@@ -182,7 +194,6 @@ def admin_a(update, context):
 
 
 def admin_b(update, context):
-    admin_id = update.message.chat_id
     msg_id = update.message.message_id
     msg = update.message.text
 
@@ -210,34 +221,33 @@ def admin_b(update, context):
         elif choice == 4:
             text = f'{opts[choice]} - digite as datas inicial e final, separadas por vírgulas ' \
                     '(exemplo "15/02/2020, 26/02/2020") ou clique em /cancelar:'
-        send_msg(admin_id, text, msg_id, RKR)
+        send_msg(curr_admin_id, text, msg_id, RKR)
         return ADMIN_C
 
 
 def admin_c(update, context):
-    admin_id = update.message.chat_id
     msg_id = update.message.message_id
     msg = update.message.text
     choice = context.user_data['selection']
 
-    text, success = fc.func_admin(msg, dbname, choice)
+    text, success = fc.func_admin(msg, choice)
     if success and choice == 1:
         text += ' Sessão encerrada.'
-    send_msg(admin_id, text, msg_id)
+    send_msg(curr_admin_id, text, msg_id)
     if success:
         if choice == 0:
             msg = msg.split(', ')
             context.user_data['user_id'] = msg[0]
             buttons = [[
                 InlineKeyboardButton(text='Enviar formulário', callback_data=str(ADMIN_D)),
-                InlineKeyboardButton(text='Sair', callback_data=str(FIM))
+                InlineKeyboardButton(text='Sair', callback_data=str(STOP))
             ]]
             keyboard = InlineKeyboardMarkup(buttons)
             text = 'Deseja enviar o formulário de configs iniciais para o usuário?'
             update.message.reply_text(text=text, reply_markup=keyboard)
             return ADMIN_D
         else:
-            return FIM
+            return STOP
     else:
         return ADMIN_C
 
@@ -245,20 +255,16 @@ def admin_c(update, context):
 def admin_d(update, context):
     text = 'Formulário enviado!'
     update.callback_query.edit_message_text(text=text)
-    FIM
+    cancel(update, context)
     configs_ini_a(update, context)
 
 
 def configs_ini_a(update, context):
-    print('update:')
-    print(update)
-    print('context:')
-    print(context)
     user_id = context.user_data['user_id']
     text = 'funcionou, sim ou não?'
     buttons = [[
-        InlineKeyboardButton(text='Vai pro B', callback_data=str(CONFIGS_INI_B)),
-        InlineKeyboardButton(text='Sair', callback_data=str(FIM))
+        InlineKeyboardButton(text='Vai pro B', callback_data=str(INIT_SET_B)),
+        InlineKeyboardButton(text='Sair', callback_data=str(STOP))
     ]]
     keyboard = InlineKeyboardMarkup(buttons)
     context.bot.sendMessage(chat_id=user_id, text=text, reply_markup=keyboard)
@@ -266,32 +272,32 @@ def configs_ini_a(update, context):
 def configs_ini_b(update, context):
     text = 'funcionou de novo, sim ou não?'
     buttons = [[
-        InlineKeyboardButton(text='Vai pro C', callback_data=str(CONFIGS_INI_C)),
-        InlineKeyboardButton(text='Sair', callback_data=str(FIM))
+        InlineKeyboardButton(text='Vai pro C', callback_data=str(INIT_SET_C)),
+        InlineKeyboardButton(text='Sair', callback_data=str(STOP))
     ]]
     keyboard = InlineKeyboardMarkup(buttons)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=keyboard)
-    return CONFIGS_INI_C
+    return INIT_SET_C
 
 def configs_ini_c(update, context):
     text = 'chega'
     buttons = [[
-        InlineKeyboardButton(text='Sair', callback_data=str(FIM))
+        InlineKeyboardButton(text='Sair', callback_data=str(STOP))
     ]]
     keyboard = InlineKeyboardMarkup(buttons)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=keyboard)
-    return CONFIGS_INI_D
+    return INIT_SET_D
 
 def configs_ini_d(update, context):
-    return CONFIGS_INI_E
+    return INIT_SET_E
 
 def configs_ini_e(update, context):
-    return CONFIGS_INI_F
+    return INIT_SET_F
 
 def configs_ini_f(update, context):
-    return FIM
+    return STOP
 
 
 # ------------------ Menu Principal -----------------------
@@ -300,7 +306,7 @@ def configs_ini_f(update, context):
 def menu(update, context):
     if not context.user_data.get(START_OVER):
         user_id = update.message.chat_id
-        user_allowed = db.user_check(user_id, dbname, 1)
+        user_allowed = db.user_check(user_id, 1)
     else:
         user_allowed = True
 
@@ -309,14 +315,14 @@ def menu(update, context):
         buttons = [[
             InlineKeyboardButton(text='Radar!', callback_data=str(MENU_RADAR)),
         ], [
-            InlineKeyboardButton(text='Carteira', callback_data=str(MENU_CARTEIRA)),
-            InlineKeyboardButton(text='Capital', callback_data=str(MENU_CAPITAL)),
+            InlineKeyboardButton(text='Carteira', callback_data=str(MENU_TRACK)),
+            InlineKeyboardButton(text='Capital', callback_data=str(MENU_PORTF)),
         ], [
             InlineKeyboardButton(text='Meu status', callback_data=str(MENU_INFO)),
-            InlineKeyboardButton(text='Configurações', callback_data=str(MENU_CONFIG)),
-            InlineKeyboardButton(text='Ajuda', callback_data=str(MENU_AJUDA))
+            InlineKeyboardButton(text='Configurações', callback_data=str(MENU_SET)),
+            InlineKeyboardButton(text='Ajuda', callback_data=str(MENU_HELP))
         ], [
-            InlineKeyboardButton(text='Fechar', callback_data=str(FIM))
+            InlineKeyboardButton(text='Fechar', callback_data=str(STOP))
         ]]
         keyboard = InlineKeyboardMarkup(buttons)
 
@@ -337,21 +343,21 @@ def menu(update, context):
 
 # Radar
 def menu_radar(update, context):
-    context.user_data[LEVEL_ANTERIOR] = menu
+    context.user_data[PREV_LEVEL] = menu
     #ordem = fc.func_ordem (?) db.get_ordem [ordenação, ordenar por]
     text = 'RADAR - Selecione o modo de análise ou modifique a ordenação dos resultados. ' \
            'Atual: ordenar por ''''+ordem'''
     buttons = [[
-        InlineKeyboardButton(text='Small Caps/Diário', callback_data=str(RADAR_SM_DI)),
-        InlineKeyboardButton(text='Mid Caps/Diário', callback_data=str(RADAR_MI_DI))
+        InlineKeyboardButton(text='Small Caps/Diário', callback_data=str(RADAR_SM_DAY)),
+        InlineKeyboardButton(text='Mid Caps/Diário', callback_data=str(RADAR_MI_DAY))
     ], [
-        InlineKeyboardButton(text='Small Caps/Semanal', callback_data=str(RADAR_SM_SEM)),
-        InlineKeyboardButton(text='Mid Caps/Semanal', callback_data=str(RADAR_MI_SEM))
+        InlineKeyboardButton(text='Small Caps/Semanal', callback_data=str(RADAR_SM_WEEK)),
+        InlineKeyboardButton(text='Mid Caps/Semanal', callback_data=str(RADAR_MI_WEEK))
     ], [
         InlineKeyboardButton(text='Ordenar resultados por...', callback_data=str(RADAR_ORDER))
     ], [
-        InlineKeyboardButton(text='Voltar', callback_data=str(FIM)),
-        InlineKeyboardButton(text='Fechar', callback_data=str(SAIR))
+        InlineKeyboardButton(text='Voltar', callback_data=str(STOP)),
+        InlineKeyboardButton(text='Fechar', callback_data=str(EXIT))
     ]]
     keyboard = InlineKeyboardMarkup(buttons)
 
@@ -368,7 +374,7 @@ def radar_activate(update, context):
 
 
 def radar_order(update, context):
-    context.user_data[LEVEL_ANTERIOR] = menu_radar
+    context.user_data[PREV_LEVEL] = menu_radar
     text = 'ORDENAR POR - Selecione qual dado será utilizado para ordenar os resultados:'
     buttons = [[
         InlineKeyboardButton(text='Nome do ativo (Stock)', callback_data='1')
@@ -383,8 +389,8 @@ def radar_order(update, context):
     ], [
         InlineKeyboardButton(text='"Trendabilidade" (Trend)', callback_data='6')
     ], [
-        InlineKeyboardButton(text='Voltar', callback_data=str(FIM)),
-        InlineKeyboardButton(text='Fechar', callback_data=str(SAIR))
+        InlineKeyboardButton(text='Voltar', callback_data=str(STOP)),
+        InlineKeyboardButton(text='Fechar', callback_data=str(EXIT))
     ]]
     keyboard = InlineKeyboardMarkup(buttons)
 
@@ -399,25 +405,25 @@ def ordenacao(update, context):
 
 # Carteira
 def menu_carteira(update, context):
-    context.user_data[LEVEL_ANTERIOR] = menu
+    context.user_data[PREV_LEVEL] = menu
     #carteira = fc.func_get_carteira (?)
     text = 'CARTEIRA - Selecione uma das opções. ' \
            'Composição atual da carteira: ''''+carteira'''
     buttons = [[
-        InlineKeyboardButton(text='Adicionar ativo', callback_data=str(CARTEIRA_ADD)),
-        InlineKeyboardButton(text='Remover ativo', callback_data=str(CARTEIRA_REM))
+        InlineKeyboardButton(text='Adicionar ativo', callback_data=str(TRACK_ADD)),
+        InlineKeyboardButton(text='Remover ativo', callback_data=str(TRACK_REM))
     ], [
-        InlineKeyboardButton(text='Desativar último(s) alerta(s)', callback_data=str(CARTEIRA_RET_ALERTA))
+        InlineKeyboardButton(text='Desativar último(s) alerta(s)', callback_data=str(TRACK_WARN_REM))
     ], [
-        InlineKeyboardButton(text='Voltar', callback_data=str(FIM)),
-        InlineKeyboardButton(text='Fechar', callback_data=str(SAIR))
+        InlineKeyboardButton(text='Voltar', callback_data=str(STOP)),
+        InlineKeyboardButton(text='Fechar', callback_data=str(EXIT))
     ]]
     keyboard = InlineKeyboardMarkup(buttons)
 
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=keyboard)
     context.user_data[START_OVER] = True
-    return MENU_CARTEIRA
+    return MENU_TRACK
 
 
 #def carteira_upd(update, context):
@@ -436,26 +442,26 @@ def menu_carteira(update, context):
 
 # Capital
 def menu_capital(update, context):
-    context.user_data[LEVEL_ANTERIOR] = menu
+    context.user_data[PREV_LEVEL] = menu
     #portfolio = db.get_portfolio (?)
     text = 'CAPITAL - Selecione uma das opções. ' \
            'Valor atual de carteira: ''''+portfolio'''
     buttons = [[
-        InlineKeyboardButton(text='Adicionar ao valor', callback_data=str(CAPITAL_ADD)),
-        InlineKeyboardButton(text='Subtrair do valor', callback_data=str(CAPITAL_SUBTR))
+        InlineKeyboardButton(text='Adicionar ao valor', callback_data=str(PORTF_ADD)),
+        InlineKeyboardButton(text='Subtrair do valor', callback_data=str(PORTF_SUBTR))
     ], [
-        InlineKeyboardButton(text='Substituir o valor', callback_data=str(CAPITAL_SUBST)),
-        InlineKeyboardButton(text='Zerar', callback_data=str(CAPITAL_ZER))
+        InlineKeyboardButton(text='Substituir o valor', callback_data=str(PORTF_SUBST)),
+        InlineKeyboardButton(text='Zerar', callback_data=str(PORTF_CLEAR))
     ], [
-        InlineKeyboardButton(text='Voltar', callback_data=str(FIM)),
-        InlineKeyboardButton(text='Fechar', callback_data=str(SAIR))
+        InlineKeyboardButton(text='Voltar', callback_data=str(STOP)),
+        InlineKeyboardButton(text='Fechar', callback_data=str(EXIT))
     ]]
     keyboard = InlineKeyboardMarkup(buttons)
 
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=keyboard)
     context.user_data[START_OVER] = True
-    return MENU_CAPITAL
+    return MENU_PORTF
 
 
 #def capital_upd(update, context):
@@ -471,26 +477,26 @@ def capital_finalizar(update, context):
 
 # Info
 def menu_info(update, context):
-    context.user_data[LEVEL_ANTERIOR] = menu
+    context.user_data[PREV_LEVEL] = menu
     text = 'MEU STATUS:'
     context.user_data[START_OVER] = False
     #blabla reply_text
-    return FIM
+    return STOP
 
 
 # Configurações
 def menu_config(update, context):
-    context.user_data[LEVEL_ANTERIOR] = menu
+    context.user_data[PREV_LEVEL] = menu
     text = 'CONFIGURAÇÕES - Selecione uma das opções.'
     buttons = [[
-        InlineKeyboardButton(text='Configs de hora', callback_data=str(CONFIG_HORA))
+        InlineKeyboardButton(text='Configs de hora', callback_data=str(SET_TIME))
     ], [
-        InlineKeyboardButton(text='Modo a ser usado automaticamente', callback_data=str(CONFIG_MODE))
+        InlineKeyboardButton(text='Modo a ser usado automaticamente', callback_data=str(SET_MODE))
     ], [
-        InlineKeyboardButton(text='Gerenciamento de risco', callback_data=str(CONFIG_RISCO)),
+        InlineKeyboardButton(text='Gerenciamento de risco', callback_data=str(SET_RISK)),
     ], [
-        InlineKeyboardButton(text='Voltar', callback_data=str(FIM)),
-        InlineKeyboardButton(text='Fechar', callback_data=str(SAIR))
+        InlineKeyboardButton(text='Voltar', callback_data=str(STOP)),
+        InlineKeyboardButton(text='Fechar', callback_data=str(EXIT))
     ]]
 
     keyboard = InlineKeyboardMarkup(buttons)
@@ -498,26 +504,26 @@ def menu_config(update, context):
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=keyboard)
     context.user_data[START_OVER] = True
-    return MENU_CONFIG
+    return MENU_SET
 
 
 # Hora
 def config_hora(update, context):
-    context.user_data[LEVEL_ANTERIOR] = menu_config
+    context.user_data[PREV_LEVEL] = menu_config
     text = 'CONFIGURAÇÕES DE HORA - Selecione uma das opções.'
     buttons = [[
-        InlineKeyboardButton(text='Mudar a hora dos alertas automáticos', callback_data=str(HORA_MUDAR))
+        InlineKeyboardButton(text='Mudar a hora dos alertas automáticos', callback_data=str(TIME_CHANGE))
     ], [
-        InlineKeyboardButton(text='Ativar/Desativar alertas automáticos', callback_data=str(HORA_ACT_DEACT))
+        InlineKeyboardButton(text='Ativar/Desativar alertas automáticos', callback_data=str(TIME_ACT_DEACT))
     ], [
-        InlineKeyboardButton(text='Voltar', callback_data=str(FIM)),
-        InlineKeyboardButton(text='Fechar', callback_data=str(SAIR))
+        InlineKeyboardButton(text='Voltar', callback_data=str(STOP)),
+        InlineKeyboardButton(text='Fechar', callback_data=str(EXIT))
     ]]
     keyboard = InlineKeyboardMarkup(buttons)
 
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=keyboard)
-    return CONFIG_HORA
+    return SET_TIME
 
 
 def hora_upd(update, context):
@@ -530,24 +536,24 @@ def hora_finalizar(update, context):
 
 # Classe/escala temporal
 def config_mode(update, context):
-    context.user_data[LEVEL_ANTERIOR] = menu_config
+    context.user_data[PREV_LEVEL] = menu_config
     text = 'CONFIGURAÇÕES DE MODO - Selecione a classe de ativos e a escala temporal a serem ' \
            'usados no alerta automático.'
     buttons = [[
-        InlineKeyboardButton(text='Small Caps/Diário', callback_data=str(RADAR_SM_DI)),
-        InlineKeyboardButton(text='Mid Caps/Diário', callback_data=str(RADAR_MI_DI))
+        InlineKeyboardButton(text='Small Caps/Diário', callback_data=str(RADAR_SM_DAY)),
+        InlineKeyboardButton(text='Mid Caps/Diário', callback_data=str(RADAR_MI_DAY))
     ], [
-        InlineKeyboardButton(text='Small Caps/Semanal', callback_data=str(RADAR_SM_SEM)),
-        InlineKeyboardButton(text='Mid Caps/Semanal', callback_data=str(RADAR_MI_SEM))
+        InlineKeyboardButton(text='Small Caps/Semanal', callback_data=str(RADAR_SM_WEEK)),
+        InlineKeyboardButton(text='Mid Caps/Semanal', callback_data=str(RADAR_MI_WEEK))
     ], [
-        InlineKeyboardButton(text='Voltar', callback_data=str(FIM)),
-        InlineKeyboardButton(text='Fechar', callback_data=str(SAIR))
+        InlineKeyboardButton(text='Voltar', callback_data=str(STOP)),
+        InlineKeyboardButton(text='Fechar', callback_data=str(EXIT))
     ]]
     keyboard = InlineKeyboardMarkup(buttons)
 
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=keyboard)
-    return CONFIG_MODE
+    return SET_MODE
 
 
 def mode_upd(update, context):
@@ -556,21 +562,21 @@ def mode_upd(update, context):
 
 # Gerenciamento de risco
 def config_risco(update, context):
-    context.user_data[LEVEL_ANTERIOR] = menu_config
+    context.user_data[PREV_LEVEL] = menu_config
     text = 'CONFIGURAÇÕES DE RISCO - Selecione o gerenciamento de risco a ser utilizado no cálculo do volume: '
     buttons = [[
-        InlineKeyboardButton(text='Bloquinho por operação', callback_data=str(RISCO_BLOQ)),
+        InlineKeyboardButton(text='Bloquinho por operação', callback_data=str(RISK_BLOCK)),
     ], [
-        InlineKeyboardButton(text='Porcentagem relativa ao stop', callback_data=str(RISCO_PORC))
+        InlineKeyboardButton(text='Porcentagem relativa ao stop', callback_data=str(RISK_PERC))
     ], [
-        InlineKeyboardButton(text='Voltar', callback_data=str(FIM)),
-        InlineKeyboardButton(text='Fechar', callback_data=str(SAIR))
+        InlineKeyboardButton(text='Voltar', callback_data=str(STOP)),
+        InlineKeyboardButton(text='Fechar', callback_data=str(EXIT))
     ]]
     keyboard = InlineKeyboardMarkup(buttons)
 
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=keyboard)
-    return CONFIG_RISCO
+    return SET_RISK
 
 
 # Bloquinhos/ porc
@@ -587,50 +593,50 @@ def risco_finalizar(update, context):
 
 # Ajuda
 def menu_ajuda(update, context):
-    context.user_data[LEVEL_ANTERIOR] = menu
+    context.user_data[PREV_LEVEL] = menu
     text = 'AJUDA - Selecione um tópico: '
     buttons = [[
-        InlineKeyboardButton(text='Como o bot funciona?', callback_data=str(AJ_COMO_FUNC)),
+        InlineKeyboardButton(text='Como o bot funciona?', callback_data=str(HP_HDIW)),
     ], [
-        InlineKeyboardButton(text='O que são os números no radar?', callback_data=str(AJ_NUMEROS))
+        InlineKeyboardButton(text='O que são os números no radar?', callback_data=str(HP_NUMS))
     ], [
-        InlineKeyboardButton(text='Qual ação do radar eu devo comprar?', callback_data=str(AJ_COMPRA))
+        InlineKeyboardButton(text='Qual ação do radar eu devo comprar?', callback_data=str(HP_BUY))
     ], [
-        InlineKeyboardButton(text='Quais e o que são as configurações?', callback_data=str(AJ_CONFIGS))
+        InlineKeyboardButton(text='Quais e o que são as configurações?', callback_data=str(HP_SET))
     ], [
-        InlineKeyboardButton(text='Outras dúvidas e sugestões', callback_data=str(AJ_CONTATO))
+        InlineKeyboardButton(text='Outras dúvidas e sugestões', callback_data=str(HP_CONTACT))
     ], [
-        InlineKeyboardButton(text='Voltar', callback_data=str(FIM)),
-        InlineKeyboardButton(text='Fechar', callback_data=str(SAIR))
+        InlineKeyboardButton(text='Voltar', callback_data=str(STOP)),
+        InlineKeyboardButton(text='Fechar', callback_data=str(EXIT))
     ]]
     keyboard = InlineKeyboardMarkup(buttons)
 
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=keyboard)
     context.user_data[START_OVER] = True
-    return MENU_AJUDA
+    return MENU_HELP
 
 
 def ajuda_finalizar(update, context):
-    context.user_data[LEVEL_ANTERIOR] = menu_ajuda
+    context.user_data[PREV_LEVEL] = menu_ajuda
     text = 'AJUDA - TITULO QUALQUER'
     buttons = [[
-        InlineKeyboardButton(text='Voltar', callback_data=str(FIM)),
-        InlineKeyboardButton(text='Fechar', callback_data=str(SAIR))
+        InlineKeyboardButton(text='Voltar', callback_data=str(STOP)),
+        InlineKeyboardButton(text='Fechar', callback_data=str(EXIT))
     ]]
     keyboard = InlineKeyboardMarkup(buttons)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=keyboard)
     context.user_data[START_OVER] = True
-    return MENU_AJUDA
+    return MENU_HELP
 
 
 # Voltar
 def voltar(update, context):
     update.callback_query.answer()
     context.user_data[START_OVER] = True
-    context.user_data[LEVEL_ANTERIOR](update, context)
-    return FIM
+    context.user_data[PREV_LEVEL](update, context)
+    return STOP
 
 
 # Finalizar a conversa
@@ -639,23 +645,24 @@ def stop(update, context):
     update.callback_query.answer()
     text = 'Até mais!'
     update.callback_query.edit_message_text(text=text)
-    return SAINDO
+    return EXITING
 
 
 def end(update, context):
+    print('entrei no end')
     context.user_data[START_OVER] = False
     update.callback_query.answer()
     text = 'Até mais!'
     update.callback_query.edit_message_text(text=text)
-    return FIM
+    return STOP
 
 
 @restricted
 def cancel(update, context):
+    print('entrei no cancel')
     text = 'Sessão de adm encerrada.'
-    user_id = update.message.chat_id
-    send_msg(user_id, text, '', RKR)
-    return FIM
+    send_msg(curr_admin_id, text, '', RKR)
+    return STOP
 
 
 # Error handler
@@ -673,22 +680,22 @@ def main():
     ajuda_finalizar_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(
             ajuda_finalizar, 
-            pattern='^{0}$|^{1}$|^{2}$|^{3}$|^{4}$'.format(str(AJ_COMO_FUNC),
-                                                           str(AJ_NUMEROS),
-                                                           str(AJ_COMPRA),
-                                                           str(AJ_CONFIGS),
-                                                           str(AJ_CONTATO))
+            pattern='^{0}$|^{1}$|^{2}$|^{3}$|^{4}$'.format(str(HP_HDIW),
+                                                           str(HP_NUMS),
+                                                           str(HP_BUY),
+                                                           str(HP_SET),
+                                                           str(HP_CONTACT))
         )],
         states={
-            AJ_SELECIONANDO: []
+            HP_SELECT: []
         },
         fallbacks=[
-            CallbackQueryHandler(stop, pattern='^'+str(SAIR)+'$'),
-            CallbackQueryHandler(voltar, pattern='^'+str(FIM)+'$')
+            CallbackQueryHandler(stop, pattern='^'+str(EXIT)+'$'),
+            CallbackQueryHandler(voltar, pattern='^'+str(STOP)+'$')
         ],
         map_to_parent={
-            FIM: MENU_AJUDA,
-            SAINDO: SAINDO
+            STOP: MENU_HELP,
+            EXITING: EXITING
         }
     )
     
@@ -696,81 +703,81 @@ def main():
         ajuda_finalizar_conv
     ]
     menu_ajuda_conv = ConversationHandler(
-        entry_points=[CallbackQueryHandler(menu_ajuda, pattern='^'+str(MENU_AJUDA)+'$')],
+        entry_points=[CallbackQueryHandler(menu_ajuda, pattern='^'+str(MENU_HELP)+'$')],
         states={
-            MENU_AJUDA: menu_ajuda_handlers,
+            MENU_HELP: menu_ajuda_handlers,
         },
         fallbacks=[
-            CallbackQueryHandler(stop, pattern='^'+str(SAIR)+'$'),
-            CallbackQueryHandler(voltar, pattern='^'+str(FIM)+'$')
+            CallbackQueryHandler(stop, pattern='^'+str(EXIT)+'$'),
+            CallbackQueryHandler(voltar, pattern='^'+str(STOP)+'$')
         ],
         map_to_parent={
-            FIM: MENU,
-            SAINDO: FIM
+            STOP: MENU,
+            EXITING: STOP
         }
     )
 
 
     # Configurações
     config_risco_handlers = [
-        CallbackQueryHandler(risco_upd, pattern='^{0}$|^{1}$'.format(str(RISCO_BLOQ),
-                                                                     str(RISCO_PORC)))
+        CallbackQueryHandler(risco_upd, pattern='^{0}$|^{1}$'.format(str(RISK_BLOCK),
+                                                                     str(RISK_PERC)))
     ]
     config_risco_conv = ConversationHandler(
-        entry_points=[CallbackQueryHandler(config_risco, pattern='^'+str(CONFIG_RISCO)+'$')],
+        entry_points=[CallbackQueryHandler(config_risco, pattern='^'+str(SET_RISK)+'$')],
         states={
-            CONFIG_RISCO: config_risco_handlers,
+            SET_RISK: config_risco_handlers,
         },
         fallbacks=[
-            CallbackQueryHandler(stop, pattern='^'+str(SAIR)+'$'),
-            CallbackQueryHandler(voltar, pattern='^'+str(FIM)+'$')
+            CallbackQueryHandler(stop, pattern='^'+str(EXIT)+'$'),
+            CallbackQueryHandler(voltar, pattern='^'+str(STOP)+'$')
         ],
         map_to_parent={
-            FIM: MENU_CONFIG,
-            SAINDO: SAINDO
+            STOP: MENU_SET,
+            EXITING: EXITING
         }
     )
 
     config_mode_handlers = [
         #CallbackQueryHandler(
         #   mode_upd, 
-        #   pattern='^{0}$|^{1}$|^{2}$|^{3}$'.format(str(RADAR_SM_DI),
-        #                                            str(RADAR_MI_DI),
-        #                                            str(RADAR_SM_SEM),
-        #                                            str(RADAR_MI_SEM))
+        #   pattern='^{0}$|^{1}$|^{2}$|^{3}$'.format(str(RADAR_SM_DAY),
+        #                                            str(RADAR_MI_DAY),
+        #                                            str(RADAR_SM_WEEK),
+        #                                            str(RADAR_MI_WEEK))
         #)
     ]
     config_mode_conv = ConversationHandler(
-        entry_points=[CallbackQueryHandler(config_mode, pattern='^'+str(CONFIG_MODE)+'$')],
+        entry_points=[CallbackQueryHandler(config_mode, pattern='^'+str(SET_MODE)+'$')],
         states={
-            CONFIG_MODE: config_mode_handlers,
+            SET_MODE: config_mode_handlers,
         },
         fallbacks=[
-            CallbackQueryHandler(stop, pattern='^'+str(SAIR)+'$'),
-            CallbackQueryHandler(voltar, pattern='^'+str(FIM)+'$')
+            CallbackQueryHandler(stop, pattern='^'+str(EXIT)+'$'),
+            CallbackQueryHandler(voltar, pattern='^'+str(STOP)+'$')
         ],
         map_to_parent={
-            FIM: MENU_CONFIG,
-            SAINDO: SAINDO
+            STOP: MENU_SET,
+            EXITING: EXITING
         }
     )
 
     config_hora_handlers = [
-        CallbackQueryHandler(hora_upd, pattern='^{0}$|^{1}$'.format(str(HORA_MUDAR),
-                                                                    str(HORA_ACT_DEACT)))
+        CallbackQueryHandler(hora_upd, pattern='^{0}$|^{1}$'.format(str(TIME_CHANGE),
+                                                                    str(TIME_ACT_DEACT)))
     ]
     config_hora_conv = ConversationHandler(
-        entry_points=[CallbackQueryHandler(config_hora, pattern='^'+str(CONFIG_HORA)+'$')],
+        entry_points=[CallbackQueryHandler(config_hora, pattern='^'+str(SET_TIME)+'$')],
         states={
-            CONFIG_HORA: config_hora_handlers,
+            SET_TIME: config_hora_handlers,
         },
         fallbacks=[
-            CallbackQueryHandler(stop, pattern='^'+str(SAIR)+'$'),
-            CallbackQueryHandler(voltar, pattern='^'+str(FIM)+'$')
+            CallbackQueryHandler(stop, pattern='^'+str(EXIT)+'$'),
+            CallbackQueryHandler(voltar, pattern='^'+str(STOP)+'$')
         ],
         map_to_parent={
-            FIM: MENU_CONFIG,
-            SAINDO: SAINDO
+            STOP: MENU_SET,
+            EXITING: EXITING
         }
     )
 
@@ -780,17 +787,17 @@ def main():
         config_risco_conv
     ]
     menu_config_conv = ConversationHandler(
-        entry_points=[CallbackQueryHandler(menu_config, pattern='^'+str(MENU_CONFIG)+'$')],
+        entry_points=[CallbackQueryHandler(menu_config, pattern='^'+str(MENU_SET)+'$')],
         states={
-            MENU_CONFIG: menu_config_handlers,
+            MENU_SET: menu_config_handlers,
         },
         fallbacks=[
-            CallbackQueryHandler(stop, pattern='^'+str(SAIR)+'$'),
-            CallbackQueryHandler(voltar, pattern='^'+str(FIM)+'$')
+            CallbackQueryHandler(stop, pattern='^'+str(EXIT)+'$'),
+            CallbackQueryHandler(voltar, pattern='^'+str(STOP)+'$')
         ],
         map_to_parent={
-            FIM: MENU,
-            SAINDO: FIM
+            STOP: MENU,
+            EXITING: STOP
         }
     )
 
@@ -799,24 +806,24 @@ def main():
     menu_capital_handlers = [
         #CallbackQueryHandler(
         #   capital_upd, 
-        #   pattern='^{0}$|^{1}$|^{2}$|^{3}$'.format(str(CAPITAL_ADD),
-        #                                            str(CAPITAL_SUBTR),
-        #                                            str(CAPITAL_SUBST),
-        #                                            str(CAPITAL_ZER))
+        #   pattern='^{0}$|^{1}$|^{2}$|^{3}$'.format(str(PORTF_ADD),
+        #                                            str(PORTF_SUBTR),
+        #                                            str(PORTF_SUBST),
+        #                                            str(PORTF_CLEAR))
         #)
     ]
     menu_capital_conv = ConversationHandler(
-        entry_points=[CallbackQueryHandler(menu_capital, pattern='^'+str(MENU_CAPITAL)+'$')],
+        entry_points=[CallbackQueryHandler(menu_capital, pattern='^'+str(MENU_PORTF)+'$')],
         states={
-            MENU_CAPITAL: menu_capital_handlers,
+            MENU_PORTF: menu_capital_handlers,
         },
         fallbacks=[
-            CallbackQueryHandler(stop, pattern='^'+str(SAIR)+'$'),
-            CallbackQueryHandler(voltar, pattern='^'+str(FIM)+'$')
+            CallbackQueryHandler(stop, pattern='^'+str(EXIT)+'$'),
+            CallbackQueryHandler(voltar, pattern='^'+str(STOP)+'$')
         ],
         map_to_parent={
-            FIM: MENU,
-            SAINDO: FIM
+            STOP: MENU,
+            EXITING: STOP
         }
     )
 
@@ -825,23 +832,23 @@ def main():
     menu_carteira_handlers = [
         #CallbackQueryHandler(
         #   carteira_upd, 
-        #   pattern='^{0}$|^{1}$|^{2}$'.format(str(CARTEIRA_ADD),
-        #                                      str(CARTEIRA_REM),
-        #                                      str(CARTEIRA_RET_ALERTA))
+        #   pattern='^{0}$|^{1}$|^{2}$'.format(str(TRACK_ADD),
+        #                                      str(TRACK_REM),
+        #                                      str(TRACK_WARN_REM))
         #)
     ]
     menu_carteira_conv = ConversationHandler(
-        entry_points=[CallbackQueryHandler(menu_carteira, pattern='^'+str(MENU_CARTEIRA)+'$')],
+        entry_points=[CallbackQueryHandler(menu_carteira, pattern='^'+str(MENU_TRACK)+'$')],
         states={
-            MENU_CARTEIRA: menu_carteira_handlers,
+            MENU_TRACK: menu_carteira_handlers,
         },
         fallbacks=[
-            CallbackQueryHandler(stop, pattern='^'+str(SAIR)+'$'),
-            CallbackQueryHandler(voltar, pattern='^'+str(FIM)+'$')
+            CallbackQueryHandler(stop, pattern='^'+str(EXIT)+'$'),
+            CallbackQueryHandler(voltar, pattern='^'+str(STOP)+'$')
         ],
         map_to_parent={
-            FIM: MENU,
-            SAINDO: FIM
+            STOP: MENU,
+            EXITING: STOP
         }
     )
 
@@ -853,17 +860,17 @@ def main():
             RADAR_ORDER: [CallbackQueryHandler(ordenacao, pattern=r'^\d$')],
         },
         fallbacks=[
-            CallbackQueryHandler(stop, pattern='^'+str(SAIR)+'$'),
-            CallbackQueryHandler(voltar, pattern='^'+str(FIM)+'$')
+            CallbackQueryHandler(stop, pattern='^'+str(EXIT)+'$'),
+            CallbackQueryHandler(voltar, pattern='^'+str(STOP)+'$')
         ],
         map_to_parent={
-            FIM: MENU_RADAR,
-            SAINDO: SAINDO
+            STOP: MENU_RADAR,
+            EXITING: EXITING
         }
     )
 
     menu_radar_handlers = [
-        CallbackQueryHandler(radar_activate, pattern='^'+str(RADAR_SM_DI)+'$'),
+        CallbackQueryHandler(radar_activate, pattern='^'+str(RADAR_SM_DAY)+'$'),
         radar_order_conv
     ]
     menu_radar_conv = ConversationHandler(
@@ -872,12 +879,12 @@ def main():
             MENU_RADAR: menu_radar_handlers,
         },
         fallbacks=[
-            CallbackQueryHandler(stop, pattern='^'+str(SAIR)+'$'),
-            CallbackQueryHandler(voltar, pattern='^'+str(FIM)+'$')
+            CallbackQueryHandler(stop, pattern='^'+str(EXIT)+'$'),
+            CallbackQueryHandler(voltar, pattern='^'+str(STOP)+'$')
         ],
         map_to_parent={
-            FIM: MENU,
-            SAINDO: FIM
+            STOP: MENU,
+            EXITING: STOP
         }
     )
 
@@ -895,21 +902,21 @@ def main():
         entry_points=[CommandHandler('menu', menu)],
         states={
             MENU: menu_handlers,
-            FIM: [CallbackQueryHandler(end, pattern='^'+str(FIM)+'$')]
+            STOP: [CallbackQueryHandler(end, pattern='^'+str(STOP)+'$')]
         },
-        fallbacks=[CallbackQueryHandler(end, pattern='^'+str(FIM)+'$')]
+        fallbacks=[CallbackQueryHandler(end, pattern='^'+str(STOP)+'$')]
     )
 
 
     # Configs Iniciais
     configs_ini_conv = ConversationHandler(
-        entry_points=[CallbackQueryHandler(configs_ini_b, pattern='^'+str(CONFIGS_INI_B))],
+        entry_points=[CallbackQueryHandler(configs_ini_b, pattern='^'+str(INIT_SET_B)+'$')],
         states={
-            CONFIGS_INI_C: [CallbackQueryHandler(configs_ini_c, pattern='^'+str(CONFIGS_INI_C)+'$'),
+            INIT_SET_C: [CallbackQueryHandler(configs_ini_c, pattern='^'+str(INIT_SET_C)+'$'),
                 MessageHandler(Filters.text, configs_ini_c)],
-            CONFIGS_INI_D: [MessageHandler(Filters.text, configs_ini_d)],
-            CONFIGS_INI_E: [MessageHandler(Filters.text, configs_ini_e)],
-            CONFIGS_INI_F: [MessageHandler(Filters.text, configs_ini_f)]
+            INIT_SET_D: [MessageHandler(Filters.text, configs_ini_d)],
+            INIT_SET_E: [MessageHandler(Filters.text, configs_ini_e)],
+            INIT_SET_F: [MessageHandler(Filters.text, configs_ini_f)]
         },
         fallbacks=[MessageHandler(Filters.regex('^(terminar)$'), end)]
     )
@@ -933,7 +940,7 @@ def main():
         },
         fallbacks=[
             CommandHandler('cancelar', cancel), 
-            CallbackQueryHandler(cancel, pattern='^'+str(FIM)+'$')
+            CallbackQueryHandler(cancel, pattern='^'+str(STOP)+'$')
         ]
     )
 

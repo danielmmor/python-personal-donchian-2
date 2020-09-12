@@ -16,20 +16,24 @@ class Functions():
         return new_format
 
 
-    def func_user_start(self, user_id, name, username, dbname):
-        user_exists = db.user_check(user_id, dbname, 0)
+    def func_user_start(self, user_id, name, username):
+        user_exists = db.user_check(user_id, 0)
         if user_exists:
-            text = 'Você já deu o start!'
-            return text
+            admin_text = f'Usuário mandou novamente:\nuser_id: {user_id}\n' \
+                         f'nome: {name}\nusername: @{username}'
+            user_text = 'Você já deu o start!'
         else:
             dia = str(datetime.now().date())
-            db.user_start(user_id, name, username, dia, dbname)
-            return False
+            db.user_start(user_id, name, username, dia)
+            admin_text = f'Novo usuário:\nuser_id: {user_id}\n' \
+                         f'nome: {name}\nusername: @{username}'
+            user_text = 'Bem-vindo, investidor! Por favor, aguarde enquanto preparamos tudo.'
+        return admin_text, user_text
 
 
-    def func_admin(self, msg, dbname, choice):
+    def func_admin(self, msg, choice):
         query_info = msg.split(', ')
-        # db.admin_queries(info_A, info_B, info_C, dbname, choice)
+        # db.admin_queries(info_A, info_B, info_C, choice)
         # 0 se autoriza: info_A = user_id, info_B = full_name, info_C = dia de hoje; 
         # 1 se desativa: info_A = user_id, info_B = info_C = '';
         # 2 se edita:    info_A = user_id, info_B = campo, info_C = novo dado;
@@ -44,10 +48,10 @@ class Functions():
 
             if choice == 0:
                 date = str(datetime.now().date())
-                res = db.admin_queries(query_info[0], query_info[1], date, dbname, choice)
+                res = db.admin_queries(query_info[0], query_info[1], date, choice)
                 action = 'autorizado'
             elif choice == 1:
-                res = db.admin_queries(query_info[0], '', '', dbname, choice)
+                res = db.admin_queries(query_info[0], '', '', choice)
                 action = 'desativado'
             elif choice in {2, 3, 4}:
                 query_info.append('')
@@ -56,13 +60,13 @@ class Functions():
                     or (choice == 3 and re.match('^(user_id|nome|username)$', query_info[0]))):
                     if re.match('^(user_id)$', query_info[0]):
                         query_info[0] = query_info[0].replace('_', '')
-                    res = db.admin_queries(query_info[0], query_info[1], query_info[2], dbname, choice)
+                    res = db.admin_queries(query_info[0], query_info[1], query_info[2], choice)
 
                 elif (choice == 4 and re.match(r'^(\d\d[/]\d\d[/]\d\d\d\d)$', query_info[0]) \
                       and re.match(r'^(\d\d[/]\d\d[/]\d\d\d\d)$', query_info[1])):
                     query_info[0] = self.func_time(query_info[0], '/')
                     query_info[1] = self.func_time(query_info[1], '/')
-                    res = db.admin_queries(query_info[0], query_info[1], query_info[2], dbname, choice)
+                    res = db.admin_queries(query_info[0], query_info[1], query_info[2], choice)
 
             if res == 0:
                 response = 'Este usuário não existe! Tente novamente ou clique em /cancelar.'
