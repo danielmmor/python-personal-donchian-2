@@ -86,7 +86,7 @@ def read_token(config):
     return parser.get('creds', 'token')
 
 def init():
-    global db, fc, bt, rkr, ADMS_LIST, token, curr_admin_id, admin_opts
+    global db, fc, bt, rkr, ADMS_LIST, token, admin_opts
     db = DBHelper()
     fc = Functions()
     bt = Buttons()
@@ -139,8 +139,8 @@ def start(update, context):
         send_msg(user_id, user_text)
         send_msg(ADMS_LIST[0], admin_text)
 
-@restricted
 def admin_a(update, context):
+    global curr_admin_id, admin_opts
     curr_admin_id = update.message.chat_id
     msg_id = update.message.message_id
     admin_text = 'Selecione uma das opções de adm ou clique em /cancelar:'
@@ -150,7 +150,8 @@ def admin_a(update, context):
     return ADMIN_B
 
 def admin_b(update, context):
-    msg_id = update.message.reply_to_message_id
+    global curr_admin_id, admin_opts
+    msg_id = update.message.message_id
     msg = update.message.text
     if msg in admin_opts:
         choice = admin_opts.index(msg)
@@ -173,13 +174,23 @@ def admin_b(update, context):
         return ADMIN_C
 
 def admin_c(update, context):
-    msg_id = update.message.reply_to_message_id
+    msg_id = update.message.message_id
     msg = update.message.text
     choice = context.user_data['selection']
     admin_text, success = fc.func_admin(msg, choice)
-    update.message.reply_text(text=admin_text)
-    return STOP
-    #continuar depois, revisar toda a parte de admin
+    send_msg(curr_admin_id, admin_text, msg_id)
+    if success:
+        if choice == 0:
+            msg = msg.split(', ')
+            context.user_data['user_id'] = msg[0]
+            buttons = bt.buttons(ADMIN_C)
+            admin_text = 'Deseja enviar o formulário de configs iniciais para o usuário?'
+            update.message.reply_text(text=admin_text, reply_markup=IKM(buttons))
+            return ADMIN_D
+        else:
+            cancel(update, context)
+    else:
+        return ADMIN_C
 
 def admin_d(update, context):
     admin_text = 'Formulário enviado!'
@@ -230,7 +241,8 @@ def menu(update, context):
         return MENU
     else:
         user_id = update.message.chat_id
-        user_allowed = db.user_check(user_id, 1)
+        query = db.user_check(user_id, 1)
+        user_allowed = int(query[0])
         if user_allowed:
             update.message.reply_text('Olá! A qualquer momento você '
                                     'pode clicar em /ajuda.')
@@ -422,9 +434,14 @@ def end(update, context):
 
 @restricted
 def cancel(update, context):
+    global curr_admin_id
     print('entrei no cancel')
     text = 'Sessão de adm encerrada.'
-    send_msg(curr_admin_id, text, '', rkr)
+    if update.callback_query:
+        update.callback_query.answer()
+        update.callback_query.edit_message_text(text=text)
+    else:
+        send_msg(curr_admin_id, text, '', rkr)
     return STOP
 
 # Error handler
@@ -432,6 +449,7 @@ def error(update, context):
     logger.warning('Update "%s" caused error "%s"', update, context.error)
 
 def main():
+    global admin_opts
     updater = Updater(token, use_context=True)
     dp = updater.dispatcher
     # Help

@@ -84,8 +84,7 @@ class DBHelper:
         else:
             stmt = 'SELECT allowed FROM admin WHERE user_id = ("'+user_id+'")'
             r = [x[0] for x in self.conn.execute(stmt)]
-            s = int(r[0])
-            return s
+            return r
 
     def admin_queries(self, info_A, info_B, info_C, choice):
         # 0 se autoriza: info_A = user_id, info_B = full_name, info_C = dia de hoje; 
@@ -95,30 +94,30 @@ class DBHelper:
         # 4 pesquisa por data: info_A = data inicial, info_B = data final
         if choice < 3:
             user_id = self.connect(info_A)
-            search = 'SELECT allowed FROM admin WHERE user_id = ("'+user_id+'")'
-            r = [x[0] for x in self.conn.execute(search)]
-            s = r[0] if r else False
-            if not s: return 0
-
-            if choice == 0:
-                if s == '1':
-                    return 1
-                elif info_B != '0':
-                    stmt = 'UPDATE admin SET name = ("'+info_B+'"), ' \
-                                            'allowed = (1), ' \
-                                            'day = ("'+info_C+'") WHERE user_id = ("'+user_id+'")'
-                else:
-                    stmt = 'UPDATE admin SET allowed = (1), ' \
-                                            'day = ("'+info_C+'") WHERE user_id = ("'+user_id+'")'
-            elif choice == 1:
-                if s == '0':
-                    return 1
-                stmt = 'UPDATE admin SET allowed = (0) WHERE user_id = ("'+user_id+'")'
-            elif choice == 2:
-                stmt = 'UPDATE admin SET '+info_B+' = ("'+info_C+'") WHERE user_id = ("'+user_id+'")'
-            self.conn.execute(stmt)
-            self.conn.commit()
-            return 2
+            exists = self.user_check(info_A, 1)
+            if exists:
+                if choice == 0:
+                    if exists[0] == '1':
+                        return 1
+                    elif info_B != '0':
+                        stmt = 'UPDATE admin ' \
+                                'SET name = ("'+info_B+'"), allowed = (1), day = ("'+info_C+'") ' \
+                                'WHERE user_id = ("'+user_id+'")'
+                    else:
+                        stmt = 'UPDATE admin ' \
+                                'SET allowed = (1), day = ("'+info_C+'") ' \
+                                'WHERE user_id = ("'+user_id+'")'
+                elif choice == 1:
+                    if exists[0] == '0':
+                        return 1
+                    stmt = 'UPDATE admin SET allowed = (0) WHERE user_id = ("'+user_id+'")'
+                elif choice == 2:
+                    stmt = 'UPDATE admin SET '+info_B+' = ("'+info_C+'") WHERE user_id = ("'+user_id+'")'
+                self.conn.execute(stmt)
+                self.conn.commit()
+                return 2
+            else:
+                return 0
         else:
             self.connect()
             if choice == 3:

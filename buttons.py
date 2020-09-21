@@ -62,6 +62,10 @@ class Buttons():
         self.STOP = ConversationHandler.END
         # Keyboard Buttons assignment
         self.all_states = {x: 0 for x in states_codes}
+        self.all_states[self.ADMIN_C] = [[
+            IKB(text='Enviar formulário', callback_data=self.ADMIN_D),
+            IKB(text='Sair', callback_data=str(self.STOP))
+        ]]
         self.all_states[self.INIT_SET_A] = [[
             IKB(text='Vai pro B', callback_data=self.INIT_SET_B),
             IKB(text='Sair', callback_data=str(self.STOP))
@@ -110,7 +114,7 @@ class Buttons():
             IKB(text='Voltar', callback_data=str(self.STOP)),
             IKB(text='Fechar', callback_data=self.EXIT)
         ]]
-        self.all_states[self.RADAR_ORDER] = [[
+        self.all_states[self.MENU_TRACK] = [[
             IKB(text='Adicionar ativo', callback_data=self.TRACK_ADD),
             IKB(text='Remover ativo', callback_data=self.TRACK_REM)
         ], [
