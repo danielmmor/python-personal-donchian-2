@@ -241,7 +241,7 @@ def menu(update, context):
         return MENU
     else:
         user_id = update.message.chat_id
-        query = db.user_check(user_id, 1)
+        query = db.user_check(user_id)
         user_allowed = int(query[0])
         if user_allowed:
             update.message.reply_text('Olá! A qualquer momento você '

@@ -15,7 +15,7 @@ class Functions():
         return new_format
 
     def func_user_start(self, user_id, name, username):
-        user_exists = db.user_check(user_id, 0)
+        user_exists = db.user_check(user_id)
         if user_exists:
             admin_text = f'Usuário mandou novamente:\nuser_id: {user_id}\n' \
                          f'nome: {name}\nusername: @{username}'
