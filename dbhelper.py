@@ -1,7 +1,7 @@
 '''
 ***TABLE users***
 user_id +++++ name +++++ username +++++ email +++++ allowed +++++ allowed_day +++++ \
-              portf +++++ small/mid +++++ daily/week +++++ hour +++++ radar_day +++++ perc/blocks +++++ 1%/8
+              portf +++++ small/mid +++++ daily/week +++++ hour +++++ radar_day +++++ blocks/perc +++++ 8/1%
 
 (radar_day: segunda 1, terça 2...)
 
@@ -32,7 +32,7 @@ class DBHelper:
             'CREATE TABLE IF NOT EXISTS users' \
                 '(user_id TEXT UNIQUE, name TEXT, username TEXT, email TEXT, ' \
                 'allowed TEXT, a_day DATE, portf TEXT, s_m TEXT, d_w TEXT, ' \
-                'hour TEXT, r_day TEXT, p_b TEXT, p_b_set TEXT)',
+                'hour TEXT, r_day TEXT, b_p TEXT, b_p_set TEXT)',
             'CREATE INDEX IF NOT EXISTS idIndex ON users(user_id ASC)',
             'CREATE INDEX IF NOT EXISTS nameIndex ON users(name ASC)',
             'CREATE INDEX IF NOT EXISTS usuarioIndex ON users(username ASC)',
@@ -115,3 +115,11 @@ class DBHelper:
             for item in r:
                 item[0] = item[0].replace('a', '')
             return r
+    
+    def user_init(self, user_id, all_data):
+        user_id = self.connect(user_id)
+        field = ['s_m', 'd_w', 'b_p', 'b_p_set', 'portf']
+        for i in range(len(field)):
+            s = 'UPDATE users SET '+field[i]+' = ("'+all_data[i]+'") WHERE user_id = ("'+user_id+'")'
+            self.conn.execute(s)
+        self.conn.commit()

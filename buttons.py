@@ -67,12 +67,17 @@ class Buttons():
             IKB(text='Sair', callback_data=str(self.STOP))
         ]]
         self.all_states[self.INIT_SET_A] = [[
-            IKB(text='Vai pro B', callback_data=self.INIT_SET_B),
-            IKB(text='Sair', callback_data=str(self.STOP))
+            IKB(text='Small Caps', callback_data='S'),
+            IKB(text='Mid Caps', callback_data='M')
         ]]
         self.all_states[self.INIT_SET_B] = [[
-            IKB(text='Vai pro C', callback_data=self.INIT_SET_C),
-            IKB(text='Sair', callback_data=str(self.STOP))
+            IKB(text='Diário', callback_data='D'),
+            IKB(text='Semanal', callback_data='W')
+        ]]
+        self.all_states[self.INIT_SET_C] = [[
+            IKB(text='Bloquinho por operação', callback_data='B'),
+        ], [
+            IKB(text='Porcentagem relativa ao stop', callback_data='P')
         ]]
         self.all_states[self.MENU] = [[
             IKB(text='Radar!', callback_data=self.MENU_RADAR),

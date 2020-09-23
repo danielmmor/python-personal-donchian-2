@@ -96,3 +96,26 @@ class Functions():
             response = 'Formato inválido! Esqueceu algo? Tente novamente ou clique em /cancelar.'
             return response, False
         
+    def func_init_check(self, mode, data):
+        if mode == 'B' and not re.match('^[1-9]+\d*$', data):
+            text = 'Formato inválido. Digite o valor dos bloquinhos neste formato ' \
+                '(somente números, sem aspas): "8" ou "12". Tente novamente:'
+            return text, False
+        elif mode == 'P' and not re.match('^\d+(([,]\d+)|)$', data):
+            text = 'Formato inválido. Digite o valor do porcentual neste formato ' \
+                '(somente números, sem aspas): "1,5" ou "2". Tente novamente:'
+            return text, False
+        elif mode in ['B', 'P']:
+            text = 'Por último: qual o seu capital atual para investir pelo método? Envie "0" '\
+                ' (zero, sem as aspas) se não quiser responder. Isto serve para o cálculo ' \
+                'automático do volume a ser comprado (ex.: "1234,56", sem as aspas).'
+            return text, True
+        elif mode == 'p':
+            if not re.match('^\d+(([,]\d+)|)$', data):
+                text = 'Formato inválido. Digite o valor do capital neste formato (somente números, sem aspas): ' \
+                    '"1234,56" ou digite "0" se não quiser responder. Tente novamente:'
+                return text, False
+            else:
+                text = 'Tudo pronto! Você pode mudar essas configurações através do /menu. ' \
+                    'Lá você também pode obter o relatório manualmente ou saber mais informações sobre o bot.'
+                return text, True

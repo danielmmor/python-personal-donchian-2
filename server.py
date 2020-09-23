@@ -1,3 +1,4 @@
+import re
 import logging
 import json
 import configparser as cfg
@@ -139,6 +140,7 @@ def start(update, context):
         send_msg(user_id, user_text)
         send_msg(ADMS_LIST[0], admin_text)
 
+@restricted
 def admin_a(update, context):
     global curr_admin_id, admin_opts
     curr_admin_id = update.message.chat_id
@@ -188,46 +190,73 @@ def admin_c(update, context):
             update.message.reply_text(text=admin_text, reply_markup=IKM(buttons))
             return ADMIN_D
         else:
-            cancel(update, context)
+            return STOP
     else:
         return ADMIN_C
 
 def admin_d(update, context):
     admin_text = 'Formulário enviado!'
     update.callback_query.edit_message_text(text=admin_text)
-    #cancel(update, context)
-    init_set_a(update, context)
+    cancel(update, context)
+    init_set_a(context)
 
-def init_set_a(update, context):
+def init_set_a(context):
     user_id = context.user_data['user_id']
-    text = 'funcionou, sim ou não?'
+    text = 'Você foi autorizado. Agora, uma etapa muito importante: vamos ' \
+           'configurar o seu perfil em poucos passos. Você vai poder modificar depois se quiser.'
+    context.bot.sendMessage(chat_id=user_id, text=text)
+    text = 'Primeiro, qual classe de ações você irá utilizar com mais frequência?'
     buttons = bt.buttons(INIT_SET_A)
     context.bot.sendMessage(chat_id=user_id, text=text, reply_markup=IKM(buttons))
+    return INIT_SET_B
 
 def init_set_b(update, context):
-    text = 'funcionou de novo, sim ou não?'
+    context.user_data['init_set'] = []
+    context.user_data['init_set'].append(update.callback_query.data)
+    text = 'Certo. Agora, qual escala temporal você prefere?'
     buttons = bt.buttons(INIT_SET_B)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
     return INIT_SET_C
 
 def init_set_c(update, context):
-    text = 'chega'
-    buttons = [[
-        IKB(text='Sair', callback_data=str(STOP))
-    ]]
+    context.user_data['init_set'].append(update.callback_query.data)
+    text = 'Ok. Qual gerenciamento de risco é mais adequado para você?'
+    buttons = bt.buttons(INIT_SET_C)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
     return INIT_SET_D
 
 def init_set_d(update, context):
+    context.user_data['init_set'].append(update.callback_query.data)
+    if update.callback_query.data == 'B':
+        text = 'Agora, digite o número de bloquinhos que serão utilizados (ex.: "8", sem as aspas):'
+    else:
+        text = 'Agora, digite o porcentual de risco (ex.: "1,5", sem as aspas):'
+    update.callback_query.answer()
+    update.callback_query.edit_message_text(text=text)
     return INIT_SET_E
 
 def init_set_e(update, context):
-    return INIT_SET_F
+    msg = update.effective_message.text
+    text, success = fc.func_init_check(context.user_data['init_set'][2], msg)
+    update.message.reply_text(text)
+    if success:
+        context.user_data['init_set'].append(msg)
+        return INIT_SET_F
+    else:
+        return INIT_SET_E
 
 def init_set_f(update, context):
-    return STOP
+    msg = update.effective_message.text
+    text, success = fc.func_init_check('p', msg)
+    update.message.reply_text(text)
+    if success:
+        context.user_data['init_set'].append(msg)
+        db.user_init(update.effective_user.id, context.user_data['init_set'])
+        return STOP
+    else:
+        return INIT_SET_F
 
 
 # ------------------ Main menu ------------------
@@ -427,9 +456,12 @@ def stop(update, context):
 def end(update, context):
     print('entrei no end')
     context.user_data[START_OVER] = False
-    update.callback_query.answer()
     text = 'Até mais!'
-    update.callback_query.edit_message_text(text=text)
+    if update.callback_query:
+        update.callback_query.answer()
+        update.callback_query.edit_message_text(text=text)
+    else:
+        send_msg(update.effective_user.id, text, '', rkr)
     return STOP
 
 @restricted
@@ -649,30 +681,26 @@ def main():
     )
     # Initial settings
     init_set_conv = ConversationHandler(
-        entry_points=[CallbackQueryHandler(init_set_b, pattern='^'+INIT_SET_B+'$')],
+        entry_points=[CallbackQueryHandler(init_set_b, pattern='^S|M$')],
         states={
-            INIT_SET_C: [CallbackQueryHandler(init_set_c, pattern='^'+INIT_SET_C+'$'),
-                MessageHandler(Filters.text, init_set_c)],
-            INIT_SET_D: [MessageHandler(Filters.text, init_set_d)],
+            INIT_SET_C: [CallbackQueryHandler(init_set_c, pattern='^D|W$')],
+            INIT_SET_D: [CallbackQueryHandler(init_set_d, pattern='^B|P$')],
             INIT_SET_E: [MessageHandler(Filters.text, init_set_e)],
-            INIT_SET_F: [MessageHandler(Filters.text, init_set_f)]
+            INIT_SET_F: [MessageHandler(Filters.text, init_set_f)],
+            STOP: [CallbackQueryHandler(end, pattern='^'+str(STOP)+'$')]
         },
-        fallbacks=[MessageHandler(Filters.regex('^(terminar)$'), end)]
+        fallbacks=[CallbackQueryHandler(end, pattern='^'+str(STOP)+'$')]
     )
     # Admin
     admin_conv = ConversationHandler(
         entry_points=[CommandHandler('admin', admin_a)],
         states={
-            ADMIN_B: [CommandHandler('admin', admin_a),
-                      MessageHandler(Filters.regex('^('+admin_opts[0]+'|' \
+            ADMIN_B: [MessageHandler(Filters.regex('^('+admin_opts[0]+'|' \
                                                    +admin_opts[1]+'|' \
                                                    +admin_opts[2]+'|' \
                                                    +admin_opts[3]+'|' \
                                                    +admin_opts[4]+')$'), admin_b)],
-
-            ADMIN_C: [CommandHandler('admin', admin_a),
-                      MessageHandler(~Filters.command, admin_c)],
-                      
+            ADMIN_C: [MessageHandler(~Filters.command, admin_c)],
             ADMIN_D: [CallbackQueryHandler(admin_d, pattern='^'+ADMIN_D+'$')]
         },
         fallbacks=[
