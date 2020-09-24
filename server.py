@@ -87,7 +87,7 @@ def read_token(config):
     return parser.get('creds', 'token')
 
 def init():
-    global db, fc, bt, rkr, ADMS_LIST, token, admin_opts
+    global db, fc, bt, rkr, ADMS_LIST, token, admin_opts, init
     db = DBHelper()
     fc = Functions()
     bt = Buttons()
@@ -102,6 +102,7 @@ def init():
         'Pesquisar usuário', 
         'Pesquisar por data'
     ]
+    init = False
     db.setup()
 
 def send_msg(user, msg, msg_id='', reply_markup=''):
@@ -201,44 +202,83 @@ def admin_d(update, context):
     init_set_a(context)
 
 def init_set_a(context):
+    global init
+    init = True
     user_id = context.user_data['user_id']
     text = 'Você foi autorizado. Agora, uma etapa muito importante: vamos ' \
            'configurar o seu perfil em poucos passos. Você vai poder modificar depois se quiser.'
     context.bot.sendMessage(chat_id=user_id, text=text)
     text = 'Primeiro, qual classe de ações você irá utilizar com mais frequência?'
-    buttons = bt.buttons(INIT_SET_A)
-    context.bot.sendMessage(chat_id=user_id, text=text, reply_markup=IKM(buttons))
+    keyboard = [['Small Caps'], ['Mid Caps']]
+    reply_markup = json.dumps({'keyboard': keyboard, 'one_time_keyboard': True})
+    send_msg(user_id, text, '', reply_markup)
     return INIT_SET_B
 
 def init_set_b(update, context):
-    context.user_data['init_set'] = []
-    context.user_data['init_set'].append(update.callback_query.data)
-    text = 'Certo. Agora, qual escala temporal você prefere?'
-    buttons = bt.buttons(INIT_SET_B)
-    update.callback_query.answer()
-    update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
-    return INIT_SET_C
+    global init
+    if not init: return STOP
+    init = False
+    user_id = update.message.chat_id
+    msg_id = update.message.message_id
+    msg = update.message.text
+    A, B = 'Small Caps', 'Mid Caps'
+    if msg not in [A, B]:
+        text = 'Resposta inválida. Tente novamente:'
+        reply_markup = json.dumps({'keyboard': [[A], [B]], 'one_time_keyboard': True})
+        send_msg(user_id, text, msg_id, reply_markup)
+        return INIT_SET_B
+    else:
+        context.user_data['init_set'] = []
+        x = 'S' if msg == A else 'M'
+        context.user_data['init_set'].append(x)
+        text = 'Certo. Agora, qual escala temporal você prefere?'
+        keyboard = [['Diário'], ['Semanal']]
+        reply_markup = json.dumps({'keyboard': keyboard, 'one_time_keyboard': True})
+        send_msg(user_id, text, '', reply_markup)
+        return INIT_SET_C
 
 def init_set_c(update, context):
-    context.user_data['init_set'].append(update.callback_query.data)
-    text = 'Ok. Qual gerenciamento de risco é mais adequado para você?'
-    buttons = bt.buttons(INIT_SET_C)
-    update.callback_query.answer()
-    update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
-    return INIT_SET_D
+    user_id = update.message.chat_id
+    msg_id = update.message.message_id
+    msg = update.message.text
+    A, B = 'Diário', 'Semanal'
+    if msg not in [A, B]:
+        text = 'Resposta inválida. Tente novamente:'
+        reply_markup = json.dumps({'keyboard': [[A], [B]], 'one_time_keyboard': True})
+        send_msg(user_id, text, msg_id, reply_markup)
+        return INIT_SET_C
+    else:
+        x = 'D' if msg == A else 'W'
+        context.user_data['init_set'].append(x)
+        text = 'Ok. Qual gerenciamento de risco é mais adequado para você?'
+        keyboard = [['Bloquinho por operação'], ['Porcentagem relativa ao stop']]
+        reply_markup = json.dumps({'keyboard': keyboard, 'one_time_keyboard': True})
+        send_msg(user_id, text, '', reply_markup)
+        return INIT_SET_D
 
 def init_set_d(update, context):
-    context.user_data['init_set'].append(update.callback_query.data)
-    if update.callback_query.data == 'B':
-        text = 'Agora, digite o número de bloquinhos que serão utilizados (ex.: "8", sem as aspas):'
+    user_id = update.message.chat_id
+    msg_id = update.message.message_id
+    msg = update.message.text
+    A, B = 'Bloquinho por operação', 'Porcentagem relativa ao stop'
+    if msg not in [A, B]:
+        text = 'Resposta inválida. Tente novamente:'
+        reply_markup = json.dumps({'keyboard': [[A], [B]], 'one_time_keyboard': True})
+        send_msg(user_id, text, msg_id, reply_markup)
+        return INIT_SET_D
     else:
-        text = 'Agora, digite o porcentual de risco (ex.: "1,5", sem as aspas):'
-    update.callback_query.answer()
-    update.callback_query.edit_message_text(text=text)
-    return INIT_SET_E
+        if msg == A:
+            x = 'B'
+            text = 'Agora, digite o número de bloquinhos que serão utilizados (ex.: "8", sem as aspas):'
+        else:
+            x = 'P'
+            text = 'Agora, digite o porcentual de risco (ex.: "1,5", sem as aspas):'
+        context.user_data['init_set'].append(x)
+        send_msg(user_id, text, '', '')
+        return INIT_SET_E
 
 def init_set_e(update, context):
-    msg = update.effective_message.text
+    msg = update.message.text
     text, success = fc.func_init_check(context.user_data['init_set'][2], msg)
     update.message.reply_text(text)
     if success:
@@ -248,7 +288,7 @@ def init_set_e(update, context):
         return INIT_SET_E
 
 def init_set_f(update, context):
-    msg = update.effective_message.text
+    msg = update.message.text
     text, success = fc.func_init_check('p', msg)
     update.message.reply_text(text)
     if success:
@@ -681,10 +721,10 @@ def main():
     )
     # Initial settings
     init_set_conv = ConversationHandler(
-        entry_points=[CallbackQueryHandler(init_set_b, pattern='^S|M$')],
+        entry_points=[MessageHandler(Filters.text, init_set_b)],
         states={
-            INIT_SET_C: [CallbackQueryHandler(init_set_c, pattern='^D|W$')],
-            INIT_SET_D: [CallbackQueryHandler(init_set_d, pattern='^B|P$')],
+            INIT_SET_C: [MessageHandler(Filters.text, init_set_c)],
+            INIT_SET_D: [MessageHandler(Filters.text, init_set_d)],
             INIT_SET_E: [MessageHandler(Filters.text, init_set_e)],
             INIT_SET_F: [MessageHandler(Filters.text, init_set_f)],
             STOP: [CallbackQueryHandler(end, pattern='^'+str(STOP)+'$')]
@@ -712,7 +752,7 @@ def main():
     start_comm = CommandHandler('start', start)
     dp.add_handler(menu_conv)
     dp.add_handler(admin_conv)
-    dp.add_handler(init_set_conv)
+    dp.add_handler(init_set_conv, 1)
     dp.add_handler(start_comm)
     # log all errors
     dp.add_error_handler(error)
