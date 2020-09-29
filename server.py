@@ -37,8 +37,9 @@ x = 3
 TRACK_ADD, TRACK_REM, TRACK_WARN_REM = states_codes[num_states : num_states + x]
 num_states += x
 # Portfolio
-x = 4
-PORTF_ADD, PORTF_SUBTR, PORTF_SUBST, PORTF_CLEAR = states_codes[num_states : num_states + x]
+x = 6
+PORTF_ADD, PORTF_SUBTR, PORTF_SUBST, PORTF_CLEAR, \
+    PORTF_CHANGE, PORTF_UPD = states_codes[num_states : num_states + x]
 num_states += x
 # Info
 x = 1
@@ -87,26 +88,26 @@ def read_token(config):
     return parser.get('creds', 'token')
 
 def init():
-    global db, fc, bt, rkr, ADMS_LIST, token, admin_opts, init
+    global db, fc, bt, RKR, ADMS_LIST, TOKEN, ADMIN_OPTS, INIT
     db = DBHelper()
     fc = Functions()
     bt = Buttons()
-    rkr = json.dumps({'remove_keyboard':True})
+    RKR = json.dumps({'remove_keyboard':True})
     # ADMINS: [Daniel Moreira]
     ADMS_LIST = [545699841]
-    token = read_token('hidden/config.cfg')
-    admin_opts = [
+    TOKEN = read_token('hidden/config.cfg')
+    ADMIN_OPTS = [
         'Autorizar usuário', 
         'Desativar usuário', 
         'Editar usuário', 
         'Pesquisar usuário', 
         'Pesquisar por data'
     ]
-    init = False
+    INIT = False
     db.setup()
 
 def send_msg(user, msg, msg_id='', reply_markup=''):
-    url = f'https://api.telegram.org/bot{token}/sendMessage?' \
+    url = f'https://api.telegram.org/bot{TOKEN}/sendMessage?' \
           f'chat_id={user}&text={msg}&reply_to_message_id={msg_id}&' \
           f'reply_markup={reply_markup}&parse_mode=HTML'
     requests.get(url)
@@ -143,37 +144,37 @@ def start(update, context):
 
 @restricted
 def admin_a(update, context):
-    global curr_admin_id, admin_opts
+    global curr_admin_id, ADMIN_OPTS
     curr_admin_id = update.message.chat_id
     msg_id = update.message.message_id
     admin_text = 'Selecione uma das opções de adm ou clique em /cancelar:'
-    keyboard = [[x] for x in admin_opts]
+    keyboard = [[x] for x in ADMIN_OPTS]
     reply_markup = json.dumps({'keyboard': keyboard, 'one_time_keyboard': True})
     send_msg(curr_admin_id, admin_text, msg_id, reply_markup)
     return ADMIN_B
 
 def admin_b(update, context):
-    global curr_admin_id, admin_opts
+    global curr_admin_id, ADMIN_OPTS
     msg_id = update.message.message_id
     msg = update.message.text
-    if msg in admin_opts:
-        choice = admin_opts.index(msg)
+    if msg in ADMIN_OPTS:
+        choice = ADMIN_OPTS.index(msg)
         context.user_data['selection'] = choice
         if choice == 0:
-            admin_text = f'{admin_opts[choice]} - digite o user_id e o nome completo, separado por vírgulas ' \
+            admin_text = f'{ADMIN_OPTS[choice]} - digite o user_id e o nome completo, separado por vírgulas ' \
                     '(se não quiser inserir o nome completo, digite "0") ou clique em /cancelar:'
         elif choice == 1:
-            admin_text = f'{admin_opts[choice]} - digite o user_id:'
+            admin_text = f'{ADMIN_OPTS[choice]} - digite o user_id:'
         elif choice == 2:
-            admin_text = f'{admin_opts[choice]} - digite o user_id, o campo a editar (nome | username | email) ' \
+            admin_text = f'{ADMIN_OPTS[choice]} - digite o user_id, o campo a editar (nome | username | email) ' \
                     'e o novo dado, separados por vírgulas (exemplo "123456, username, @Usuario") ou clique em /cancelar:'
         elif choice == 3:
-            admin_text = f'{admin_opts[choice]} - digite o campo de pesquisa (user_id | nome | username) ' \
+            admin_text = f'{ADMIN_OPTS[choice]} - digite o campo de pesquisa (user_id | nome | username) ' \
                     'e a pesquisa, separados por vírgula (exemplo "username, @Usuario") ou clique em /cancelar:'
         elif choice == 4:
-            admin_text = f'{admin_opts[choice]} - digite as datas inicial e final, separadas por vírgulas ' \
+            admin_text = f'{ADMIN_OPTS[choice]} - digite as datas inicial e final, separadas por vírgulas ' \
                     '(exemplo "15/02/2020, 26/02/2020") ou clique em /cancelar:'
-        send_msg(curr_admin_id, admin_text, msg_id, rkr)
+        send_msg(curr_admin_id, admin_text, msg_id, RKR)
         return ADMIN_C
 
 def admin_c(update, context):
@@ -191,7 +192,7 @@ def admin_c(update, context):
             update.message.reply_text(text=admin_text, reply_markup=IKM(buttons))
             return ADMIN_D
         else:
-            return STOP
+            return -1
     else:
         return ADMIN_C
 
@@ -202,8 +203,8 @@ def admin_d(update, context):
     init_set_a(context)
 
 def init_set_a(context):
-    global init
-    init = True
+    global INIT
+    INIT = True
     user_id = context.user_data['user_id']
     text = 'Você foi autorizado. Agora, uma etapa muito importante: vamos ' \
            'configurar o seu perfil em poucos passos. Você vai poder modificar depois se quiser.'
@@ -215,9 +216,9 @@ def init_set_a(context):
     return INIT_SET_B
 
 def init_set_b(update, context):
-    global init
-    if not init: return STOP
-    init = False
+    global INIT
+    if not INIT: return STOP
+    INIT = False
     user_id = update.message.chat_id
     msg_id = update.message.message_id
     msg = update.message.text
@@ -294,7 +295,7 @@ def init_set_f(update, context):
     if success:
         context.user_data['init_set'].append(msg)
         db.user_init(update.effective_user.id, context.user_data['init_set'])
-        return STOP
+        return -1
     else:
         return INIT_SET_F
 
@@ -302,7 +303,8 @@ def init_set_f(update, context):
 # ------------------ Main menu ------------------
 
 def menu(update, context):
-    text = 'MENU PRINCIPAL - Selecione uma das opções.'
+    print('entrei no menu')
+    text = 'MENU PRINCIPAL - Selecione uma das opções.\n\r'
     buttons = bt.buttons(MENU)
     if context.user_data.get(START_OVER):
         update.callback_query.answer()
@@ -310,8 +312,8 @@ def menu(update, context):
         return MENU
     else:
         user_id = update.message.chat_id
-        query = db.user_check(user_id)
-        user_allowed = int(query[0])
+        query = db.get_info(user_id)
+        user_allowed = int(query[0][4])
         if user_allowed:
             update.message.reply_text('Olá! A qualquer momento você '
                                     'pode clicar em /ajuda.')
@@ -326,7 +328,7 @@ def menu(update, context):
 def menu_radar(update, context):
     context.user_data[PREV_LEVEL] = menu
     #ordem = fc.func_ordem (?) db.get_ordem [ordenação, ordenar por]
-    text = 'RADAR - Selecione o modo de análise ou modifique a ordenação dos resultados. ' \
+    text = 'RADAR - Selecione o modo de análise ou modifique a ordenação dos resultados.\n\r' \
            'Atual: ordenar por ''''+ordem'''
     buttons = bt.buttons(MENU_RADAR)
     update.callback_query.answer()
@@ -354,8 +356,8 @@ def order(update, context):
 def menu_track(update, context):
     context.user_data[PREV_LEVEL] = menu
     #carteira = fc.func_get_carteira (?)
-    text = 'CARTEIRA - Selecione uma das opções. ' \
-           'Composição atual da carteira: ''''+carteira'''
+    text = 'CARTEIRA - Selecione uma das opções.\n\r' \
+           'Composição atual da carteira:\n\r''''+carteira'''
     buttons = bt.buttons(MENU_TRACK)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
@@ -376,31 +378,80 @@ def menu_track(update, context):
 
 # Portfolio
 def menu_portf(update, context):
+    print('entrei no menu portf')
     context.user_data[PREV_LEVEL] = menu
-    #portfolio = db.get_portfolio (?)
-    text = 'CAPITAL - Selecione uma das opções. ' \
-           'Valor atual de carteira: ''''+portfolio'''
+    user_id = update.effective_user.id
+    portf = db.get_info(user_id)[0][6]
+    text = 'CAPITAL - Selecione uma das opções.\n\r' \
+           'Valor atual de carteira: R$'+portf+''
     buttons = bt.buttons(MENU_PORTF)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
     context.user_data[START_OVER] = True
-    return MENU_PORTF
+    return PORTF_UPD
 
-#def portf_upd(update, context):
-    #if add/subtrair/subst
-    #text = '''ADD/SUBTRAIR/SUBST'''+'Digite o valor:'
-    #elif zerar
-    #text = 'Tem certeza que deseja zerar?'
+def portf_upd(update, context):
+    context.user_data[PREV_LEVEL] = menu_portf
+    print('entrei no portf upd')
+    user_id = update.effective_user.id
+    choice = update.callback_query.data
+    call_back = [PORTF_ADD, PORTF_SUBTR, PORTF_SUBST, PORTF_CLEAR]
+    context.user_data['choice'] = call_back.index(choice)
+    if choice == call_back[3]:
+        text = 'Tem certeza que deseja zerar o valor do capital?'
+        keyboard = [['Sim'], ['Cancelar']]
+        reply_markup = json.dumps({'keyboard': keyboard, 'one_time_keyboard': True})
+        query_markup = ''
+        forward = PORTF_CLEAR
+        context.bot.sendMessage(chat_id=user_id, text='Escolha abaixo:', reply_markup=reply_markup)
+    else:
+        opts = ['adicionar', 'subtrair', 'substituir']
+        text = 'CAPITAL - Digite o valor a '+opts[call_back.index(choice)]+' ' \
+            '(somente números) ou selecione uma das opções:'
+        buttons = bt.buttons(EXIT)
+        query_markup = IKM(buttons)
+        forward = PORTF_CHANGE
+    update.callback_query.answer()
+    send = update.callback_query.edit_message_text(text=text, reply_markup=query_markup)
+    context.user_data['msg_id'] = send.message_id
+    return forward
 
-def portf_exit(update, context):
-    return 'confirmado ou rejeitado'
+def portf_change(update, context):
+    print('entrei no portf change')
+    user_id = update.message.chat_id
+    msg = update.message.text
+    choice = context.user_data['choice']
+    text, success = fc.func_portf_upd(user_id, msg, choice)
+    context.bot.deleteMessage(chat_id=user_id, message_id=context.user_data['msg_id'])
+    context.bot.sendMessage(chat_id=user_id, text=text)
+    if not success: return PORTF_CHANGE
+    print('vou retornar EXIT')
+    context.user_data[START_OVER] = False
+    return EXIT
+
+def portf_clear(update, context):
+    print('entrei no portf clear')
+    user_id = update.message.chat_id
+    msg = update.message.text
+    if msg == 'Cancelar':
+        text = 'Operação cancelada.\n\rAté mais!'
+    else:
+        choice = context.user_data['choice']
+        text = fc.func_portf_upd(user_id, msg, choice)
+    update.message.reply_text(text=text)
+    print('vou retornar EXIT')
+    context.user_data[START_OVER] = False
+    return EXIT
 
 # Info
 def menu_info(update, context):
     context.user_data[PREV_LEVEL] = menu
-    text = 'MEU STATUS:'
+    user_id = update.effective_user.id
+    text = fc.func_get_info(user_id)
+    update.callback_query.answer()
+    update.callback_query.edit_message_text(text=text)#, reply_markup=IKM(buttons))
+    context.bot.sendMessage(chat_id=user_id, text='Até mais!')
     context.user_data[START_OVER] = False
-    #blabla reply_text
     return STOP
 
 # Settings
@@ -431,8 +482,8 @@ def time_exit(update, context):
 # Radar mode settings
 def set_mode(update, context):
     context.user_data[PREV_LEVEL] = menu_set
-    text = 'CONFIGURAÇÕES DE MODO - Selecione a classe de ativos e a escala temporal a serem ' \
-           'usados no alerta automático.'
+    text = 'CONFIGURAÇÕES DE MODO - Selecione a classe de ativos ' \
+           'e a escala temporal a serem usados no alerta automático.'
     buttons = bt.buttons(SET_MODE)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
@@ -444,7 +495,8 @@ def mode_upd(update, context):
 # Risk mngmt settings
 def set_risk(update, context):
     context.user_data[PREV_LEVEL] = menu_set
-    text = 'CONFIGURAÇÕES DE RISCO - Selecione o gerenciamento de risco a ser utilizado no cálculo do volume: '
+    text = 'CONFIGURAÇÕES DE RISCO - Selecione o gerenciamento de risco a ' \
+           'ser utilizado no cálculo do volume:'
     buttons = bt.buttons(SET_RISK)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
@@ -461,7 +513,7 @@ def risk_exit(update, context):
 # Help
 def menu_help(update, context):
     context.user_data[PREV_LEVEL] = menu
-    text = 'AJUDA - Selecione um tópico: '
+    text = 'AJUDA - Selecione um tópico:'
     buttons = bt.buttons(MENU_HELP)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
@@ -471,7 +523,7 @@ def menu_help(update, context):
 def help_exit(update, context):
     context.user_data[PREV_LEVEL] = menu_help
     text = 'AJUDA - TITULO QUALQUER'
-    buttons = bt.buttons(HP_EXIT)
+    buttons = bt.buttons(EXIT)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
     context.user_data[START_OVER] = True
@@ -501,7 +553,7 @@ def end(update, context):
         update.callback_query.answer()
         update.callback_query.edit_message_text(text=text)
     else:
-        send_msg(update.effective_user.id, text, '', rkr)
+        send_msg(update.effective_user.id, text, '', RKR)
     return STOP
 
 @restricted
@@ -513,7 +565,7 @@ def cancel(update, context):
         update.callback_query.answer()
         update.callback_query.edit_message_text(text=text)
     else:
-        send_msg(curr_admin_id, text, '', rkr)
+        send_msg(curr_admin_id, text, '', RKR)
     return STOP
 
 # Error handler
@@ -521,8 +573,8 @@ def error(update, context):
     logger.warning('Update "%s" caused error "%s"', update, context.error)
 
 def main():
-    global admin_opts
-    updater = Updater(token, use_context=True)
+    global ADMIN_OPTS
+    updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
     # Help
     help_exit_conv = ConversationHandler(
@@ -631,18 +683,30 @@ def main():
         }
     )
     # Portfolio
-    menu_portf_handlers = [
-        #CallbackQueryHandler(
-        #   capital_upd, 
-        #   pattern='^{0}$|^{1}$|^{2}$|^{3}$'.format(str(PORTF_ADD),
-        #                                            str(PORTF_SUBTR),
-        #                                            str(PORTF_SUBST),
-        #                                            str(PORTF_CLEAR))
-        #)
-    ]
+    portf_upd_conv = ConversationHandler(
+        entry_points=[CallbackQueryHandler(portf_upd, pattern='^'+PORTF_ADD+'|' \
+                                                              +PORTF_SUBTR+'|' \
+                                                              +PORTF_SUBST+'|' \
+                                                              +PORTF_CLEAR+'$')],
+        states={
+            PORTF_CHANGE: [MessageHandler(Filters.text, portf_change)],
+            PORTF_CLEAR: [MessageHandler(Filters.text, portf_clear)]
+        },
+        fallbacks=[
+            MessageHandler(Filters.regex('^admin_exit$'), end),
+            CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
+            CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
+        ],
+        map_to_parent={
+            STOP: MENU_PORTF,
+            EXITING: EXITING,
+            EXIT: EXITING
+        }
+    )
+    menu_portf_handlers = [portf_upd_conv]
     menu_portf_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(menu_portf, pattern='^'+MENU_PORTF+'$')],
-        states={MENU_PORTF: menu_portf_handlers,},
+        states={PORTF_UPD: menu_portf_handlers},
         fallbacks=[
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
@@ -663,7 +727,7 @@ def main():
     ]
     menu_track_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(menu_track, pattern='^'+MENU_TRACK+'$')],
-        states={MENU_TRACK: menu_track_handlers,},
+        states={MENU_TRACK: menu_track_handlers},
         fallbacks=[
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
@@ -676,7 +740,7 @@ def main():
     # Radar
     radar_order_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(radar_order, pattern='^'+RADAR_ORDER+'$')],
-        states={RADAR_ORDER: [CallbackQueryHandler(order, pattern=r'^\d$')],},
+        states={RADAR_ORDER: [CallbackQueryHandler(order, pattern=r'^\d$')]},
         fallbacks=[
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
@@ -692,7 +756,7 @@ def main():
     ]
     menu_radar_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(menu_radar, pattern='^'+MENU_RADAR+'$')],
-        states={MENU_RADAR: menu_radar_handlers,},
+        states={MENU_RADAR: menu_radar_handlers},
         fallbacks=[
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
@@ -735,18 +799,19 @@ def main():
     admin_conv = ConversationHandler(
         entry_points=[CommandHandler('admin', admin_a)],
         states={
-            ADMIN_B: [MessageHandler(Filters.regex('^('+admin_opts[0]+'|' \
-                                                   +admin_opts[1]+'|' \
-                                                   +admin_opts[2]+'|' \
-                                                   +admin_opts[3]+'|' \
-                                                   +admin_opts[4]+')$'), admin_b)],
+            ADMIN_B: [MessageHandler(Filters.regex('^('+ADMIN_OPTS[0]+'|' \
+                                                   +ADMIN_OPTS[1]+'|' \
+                                                   +ADMIN_OPTS[2]+'|' \
+                                                   +ADMIN_OPTS[3]+'|' \
+                                                   +ADMIN_OPTS[4]+')$'), admin_b)],
             ADMIN_C: [MessageHandler(~Filters.command, admin_c)],
             ADMIN_D: [CallbackQueryHandler(admin_d, pattern='^'+ADMIN_D+'$')]
         },
         fallbacks=[
             CommandHandler('cancelar', cancel), 
             CallbackQueryHandler(cancel, pattern='^'+str(STOP)+'$')
-        ]
+        ],
+        conversation_timeout=30,
     )
 
     start_comm = CommandHandler('start', start)

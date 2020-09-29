@@ -65,12 +65,6 @@ class DBHelper:
             self.conn.execute(s)
         self.conn.commit()
 
-    def user_check(self, user_id):
-        user_id = self.connect(user_id)
-        stmt = 'SELECT allowed FROM users WHERE user_id = ("'+user_id+'")'
-        q = [x[0] for x in self.conn.execute(stmt)]
-        return q
-
     def admin_queries(self, info_A, info_B, info_C, choice):
         # 0 se autoriza: info_A = user_id, info_B = full_name, info_C = dia de hoje; 
         # 1 se desativa: info_A = user_id, info_B = info_C = '';
@@ -79,11 +73,10 @@ class DBHelper:
         # 4 pesquisa por data: info_A = data inicial, info_B = data final
         if choice < 3:
             user_id = self.connect(info_A)
-            exists = self.user_check(info_A)
+            exists = self.get_info(info_A)
             if exists:
                 if choice == 0:
-                    if exists[0] == '1':
-                        return 1
+                    if exists[0][4] == '1': return 1
                     elif info_B != '0':
                         stmt = 'UPDATE users ' \
                                'SET name = ("'+info_B+'"), allowed = (1), a_day = ("'+info_C+'") ' \
@@ -93,8 +86,7 @@ class DBHelper:
                                'SET allowed = (1), a_day = ("'+info_C+'") ' \
                                'WHERE user_id = ("'+user_id+'")'
                 elif choice == 1:
-                    if exists[0] == '0':
-                        return 1
+                    if exists[0][4] == '0': return 1
                     stmt = 'UPDATE users SET allowed = (0) WHERE user_id = ("'+user_id+'")'
                 elif choice == 2:
                     stmt = 'UPDATE users SET '+info_B+' = ("'+info_C+'") WHERE user_id = ("'+user_id+'")'
@@ -122,4 +114,29 @@ class DBHelper:
         for i in range(len(field)):
             s = 'UPDATE users SET '+field[i]+' = ("'+all_data[i]+'") WHERE user_id = ("'+user_id+'")'
             self.conn.execute(s)
+        self.conn.commit()
+
+    def get_info(self, user_id):
+        # q[0] - 0: user_id
+        # 1: name
+        # 2: username
+        # 3: email
+        # 4: allowed
+        # 5: a_day
+        # 6: portf
+        # 7: S_M
+        # 8: D_W
+        # 9: hour
+        # 10: r_day
+        # 11: B_P
+        # 12: 8/1%
+        user_id = self.connect(user_id)
+        stmt = 'SELECT * FROM users WHERE user_id = ("'+user_id+'")'
+        q = [x for x in self.conn.execute(stmt)]
+        return q
+
+    def info_upd(self, user_id, field, data):
+        user_id = self.connect(user_id)
+        stmt = 'UPDATE users SET '+field+' = ("'+data+'") WHERE user_id = ("'+user_id+'")'
+        self.conn.execute(stmt)
         self.conn.commit()

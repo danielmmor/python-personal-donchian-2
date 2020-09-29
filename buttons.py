@@ -21,8 +21,9 @@ class Buttons():
         self.TRACK_ADD, self.TRACK_REM, self.TRACK_WARN_REM = states_codes[num_states : num_states + x]
         num_states += x
         # Portfolio
-        x = 4
-        self.PORTF_ADD, self.PORTF_SUBTR, self.PORTF_SUBST, self.PORTF_CLEAR = states_codes[num_states : num_states + x]
+        x = 6
+        self.PORTF_ADD, self.PORTF_SUBTR, self.PORTF_SUBST, self.PORTF_CLEAR, \
+            self.PORTF_CHANGE, self.PORTF_UPD = states_codes[num_states : num_states + x]
         num_states += x
         # Info
         x = 1
@@ -66,14 +67,17 @@ class Buttons():
             IKB(text='Enviar formulário', callback_data=self.ADMIN_D),
             IKB(text='Sair', callback_data=str(self.STOP))
         ]]
+        # deprecated
         self.all_states[self.INIT_SET_A] = [[
             IKB(text='Small Caps', callback_data='S'),
             IKB(text='Mid Caps', callback_data='M')
         ]]
+        # deprecated
         self.all_states[self.INIT_SET_B] = [[
             IKB(text='Diário', callback_data='D'),
             IKB(text='Semanal', callback_data='W')
         ]]
+        # deprecated
         self.all_states[self.INIT_SET_C] = [[
             IKB(text='Bloquinho por operação', callback_data='B'),
         ], [
@@ -188,7 +192,7 @@ class Buttons():
             IKB(text='Voltar', callback_data=str(self.STOP)),
             IKB(text='Fechar', callback_data=self.EXIT)
         ]]
-        self.all_states[self.HP_EXIT] = [[
+        self.all_states[self.EXIT] = [[
             IKB(text='Voltar', callback_data=str(self.STOP)),
             IKB(text='Fechar', callback_data=self.EXIT)
         ]]

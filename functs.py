@@ -15,8 +15,8 @@ class Functions():
         return new_format
 
     def func_user_start(self, user_id, name, username):
-        user_exists = db.user_check(user_id)
-        if user_exists:
+        exists = db.get_info(user_id)
+        if exists:
             admin_text = f'Usuário mandou novamente:\nuser_id: {user_id}\n' \
                          f'nome: {name}\nusername: @{username}'
             user_text = 'Você já deu o start!'
@@ -119,3 +119,54 @@ class Functions():
                 text = 'Tudo pronto! Você pode mudar essas configurações através do /menu. ' \
                     'Lá você também pode obter o relatório manualmente ou saber mais informações sobre o bot.'
                 return text, True
+    
+    def func_get_info(self, user_id):
+        info = db.get_info(user_id)
+        stock = 'Small Caps' if info[0][7] == 'S' else 'Mid Caps'
+        freq = 'Diário' if info[0][8] == 'D' else 'Semanal'
+        days = [
+            'todos os dias',
+            'Segunda-Feira',
+            'Terça-Feira',
+            'Quarta-Feira',
+            'Quinta-Feira',
+            'Sexta-Feira',
+            'Sábado',
+            'Domingo',
+        ]
+        day = days[0] if info[0][8] == 'D' else days[int(info[0][10])]
+        if info[0][11] == 'B':
+            risk = 'Bloquinho por operação\n\rBloquinhos: '+info[0][12]+''
+        else:
+            risk = 'Porcentagem relativa ao stop\n\rPorcentual: '+info[0][12]+'%'
+        text = 'MEU STATUS:\n\r\n\r' \
+            'Capital: R$'+info[0][6]+'\n\r' \
+            'Classe de ações padrão: '+stock+'\n\r' \
+            'Escala temporal padrão: '+freq+'\n\r' \
+            'Hora e dia da semana programados: ' \
+            ''+info[0][9]+', '+day+'\n\r' \
+            'Gerenciamento de risco: '+risk
+        return text
+
+    def func_portf_upd(self, user_id, msg, choice):
+        if choice < 3 and re.match('^\d+(([,]\d+)|)$', msg):
+            if msg.rfind(','): msg = msg.replace(',', '.')
+            msg = float(msg)
+            port = db.get_info(user_id)[0][6]
+            if port.rfind(','): port = port.replace(',', '.')
+            port = float(port)
+            if choice == 0: port += msg
+            if choice == 1: port -= msg
+            if choice == 2: port = msg
+            port = '{:.2f}'.format(port).replace('.', ',')
+            db.info_upd(user_id, 'portf', port)
+            text = 'Pronto! O novo capital é de R$'+port+'.\n\rAté mais!'
+            return text, True
+        elif choice == 3 and re.match('^(Sim)$', msg):
+            port = '0'
+            db.info_upd(user_id, 'portf', port)
+            text = 'Pronto! O capital foi zerado.\n\rAté mais!'
+            return text
+        else:
+            text = 'Formato inválido. Tente colocar o valor neste formato (somente números): "1234,56"'
+            return text, False
