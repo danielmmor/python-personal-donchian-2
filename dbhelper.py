@@ -140,3 +140,22 @@ class DBHelper:
         stmt = 'UPDATE users SET '+field+' = ("'+data+'") WHERE user_id = ("'+user_id+'")'
         self.conn.execute(stmt)
         self.conn.commit()
+
+    def get_tickers(self, user_id):
+        user_id = self.connect(user_id)
+        stmt = 'SELECT * FROM '+user_id
+        q = [x for x in self.conn.execute(stmt)]
+        return q
+
+    def tickers_upd(self, user_id, ticker, choice):
+        user_id = self.connect(user_id)
+        if choice == 0:
+            stmt = 'INSERT OR IGNORE INTO '+user_id+' (ticker) VALUES ("'+ticker+'")'
+        else:
+            stmt = 'DELETE FROM '+user_id+' WHERE ticker = ("'+ticker+'")'
+        try:
+            self.conn.execute(stmt)
+            self.conn.commit()
+            return True
+        except:
+            return False

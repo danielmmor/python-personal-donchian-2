@@ -18,7 +18,7 @@ class Buttons():
         num_states += x
         # Ticker tracker
         x = 3
-        self.TRACK_ADD, self.TRACK_REM, self.TRACK_WARN_REM = states_codes[num_states : num_states + x]
+        self.TRACK_UPD, self.TRACK_EXIT, self.TRACK_WARN_REM = states_codes[num_states : num_states + x]
         num_states += x
         # Portfolio
         x = 6
@@ -124,10 +124,10 @@ class Buttons():
             IKB(text='Fechar', callback_data=self.EXIT)
         ]]
         self.all_states[self.MENU_TRACK] = [[
-            IKB(text='Adicionar ativo', callback_data=self.TRACK_ADD),
-            IKB(text='Remover ativo', callback_data=self.TRACK_REM)
-        ], [
-            IKB(text='Desativar último(s) alerta(s)', callback_data=self.TRACK_WARN_REM)
+            IKB(text='Adicionar ativo', callback_data='0'),
+            IKB(text='Remover ativo', callback_data='1')
+        #], [
+        #    IKB(text='Desativar último(s) alerta(s)', callback_data=self.TRACK_WARN_REM)
         ], [
             IKB(text='Voltar', callback_data=str(self.STOP)),
             IKB(text='Fechar', callback_data=self.EXIT)

@@ -34,7 +34,7 @@ RADAR_SM_DAY, RADAR_SM_WEEK, RADAR_MI_DAY, RADAR_MI_WEEK, \
 num_states += x
 # Ticker tracker
 x = 3
-TRACK_ADD, TRACK_REM, TRACK_WARN_REM = states_codes[num_states : num_states + x]
+TRACK_UPD, TRACK_EXIT, TRACK_WARN_REM = states_codes[num_states : num_states + x]
 num_states += x
 # Portfolio
 x = 6
@@ -355,26 +355,46 @@ def order(update, context):
 # Tracker
 def menu_track(update, context):
     context.user_data[PREV_LEVEL] = menu
-    #carteira = fc.func_get_carteira (?)
+    user_id = update.effective_user.id
     text = 'CARTEIRA - Selecione uma das opções.\n\r' \
-           'Composição atual da carteira:\n\r''''+carteira'''
+           'Composição atual da carteira:\n\r'+fc.func_get_tickers(user_id)
     buttons = bt.buttons(MENU_TRACK)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
     context.user_data[START_OVER] = True
-    return MENU_TRACK
+    return TRACK_UPD
 
-#def track_upd(update, context):
-    #if add
-    #text = ADD+'Digite o índice a ser adicionado:'
-    #elif rem
-    #text = REM+'Escolha o índice a ser removido:'
+def track_upd(update, context):
+    context.user_data[PREV_LEVEL] = menu_track
+    user_id = update.effective_user.id
+    choice = int(update.callback_query.data)
+    context.user_data['choice'] = choice
+    if choice == 0:
+        text = 'Digite o índice a ser adicionado ou selecione uma das opções:'
+    else:
+        t_list = fc.func_get_tickers(user_id).split('\n')
+        reply_markup = json.dumps({'keyboard': [[x] for x in t_list], 'one_time_keyboard': True})
+        text = 'Escolha o índice a ser removido ou selecione uma das opções:'
+        context.bot.sendMessage(chat_id=user_id, text='Carteira:', reply_markup=reply_markup)
     #keyboard com os índices
     #elif retirar alerta
     #text = RETI+'Os alertas da carteira foram removidos até o preço mudar novamente.'
+    buttons = bt.buttons(EXIT)
+    update.callback_query.answer()
+    send = update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
+    context.user_data['msg_id'] = send.message_id
+    return TRACK_EXIT
 
-#def track_exit(update, context):
-    #confirmar sucesso da alteração
+def track_exit(update, context):
+    user_id = update.message.chat_id
+    msg = update.message.text
+    choice = context.user_data['choice']
+    text, success = fc.func_tickers_upd(user_id, msg, choice)
+    context.bot.deleteMessage(chat_id=user_id, message_id=context.user_data['msg_id'])
+    context.bot.sendMessage(chat_id=user_id, text=text)
+    if not success: return TRACK_EXIT
+    context.user_data[START_OVER] = False
+    return EXITING
 
 # Portfolio
 def menu_portf(update, context):
@@ -427,7 +447,7 @@ def portf_change(update, context):
     if not success: return PORTF_CHANGE
     print('vou retornar EXIT')
     context.user_data[START_OVER] = False
-    return EXIT
+    return EXITING
 
 def portf_clear(update, context):
     print('entrei no portf clear')
@@ -441,7 +461,7 @@ def portf_clear(update, context):
     update.message.reply_text(text=text)
     print('vou retornar EXIT')
     context.user_data[START_OVER] = False
-    return EXIT
+    return EXITING
 
 # Info
 def menu_info(update, context):
@@ -700,7 +720,6 @@ def main():
         map_to_parent={
             STOP: MENU_PORTF,
             EXITING: EXITING,
-            EXIT: EXITING
         }
     )
     menu_portf_handlers = [portf_upd_conv]
@@ -717,17 +736,12 @@ def main():
         }
     )
     # Ticker track
-    menu_track_handlers = [
-        #CallbackQueryHandler(
-        #   carteira_upd, 
-        #   pattern='^{0}$|^{1}$|^{2}$'.format(str(TRACK_ADD),
-        #                                      str(TRACK_REM),
-        #                                      str(TRACK_WARN_REM))
-        #)
-    ]
     menu_track_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(menu_track, pattern='^'+MENU_TRACK+'$')],
-        states={MENU_TRACK: menu_track_handlers},
+        states={
+            TRACK_UPD: [CallbackQueryHandler(track_upd, pattern=r'^\d$')],
+            TRACK_EXIT: [MessageHandler(Filters.text, track_exit)]
+        },
         fallbacks=[
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')

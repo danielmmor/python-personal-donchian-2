@@ -170,3 +170,27 @@ class Functions():
         else:
             text = 'Formato inválido. Tente colocar o valor neste formato (somente números): "1234,56"'
             return text, False
+
+    def func_get_tickers(self, user_id):
+        t_list = db.get_tickers(user_id)
+        if t_list:
+            t_list = [x[0] for x in t_list]
+            text = '\n'.join(t_list)
+        else:
+            text = 'A sua carteira está vazia!'
+        return text
+
+    def func_tickers_upd(self, user_id, msg, choice):
+        if re.match('^[a-zA-Z]{4}(\d|\d\d)$', msg):
+            success = db.tickers_upd(user_id, msg, choice)
+            action = ['adicionado', 'removido']
+            if success:
+                text = 'O ativo '+msg+' foi '+action[choice]+' com sucesso!\nAté mais!'
+            else:
+                text = 'Não existe este ativo na sua carteira!\nAté mais!'
+        else:
+            success = False
+            text ='Tente colocar o índice neste formato: "PETR4" (sem as aspas):'
+        return text, success
+
+        
