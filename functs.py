@@ -193,4 +193,77 @@ class Functions():
             text ='Tente colocar o índice neste formato: "PETR4" (sem as aspas):'
         return text, success
 
-        
+    def func_time_upd(self, user_id, step, choice, msg=''):
+        days = [
+            'todos os dias',
+            'Segunda-Feira',
+            'Terça-Feira',
+            'Quarta-Feira',
+            'Quinta-Feira',
+            'Sexta-Feira',
+            'Sábado',
+            'Domingo',
+        ]
+        if step == 'A':
+            time = db.get_info(user_id)[0][9+choice]
+            if choice == 0:
+                cb_text = 'MUDAR HORA\r\n' \
+                    'A hora programada atual é '+time+'. Digite a nova hora ' \
+                    'desejada ou selecione uma das opções:'
+                text, keyboard = False, False
+            else:
+                d_w = db.get_info(user_id)[0][8]
+                if d_w == 'D':
+                    cb_text = 'A escala programada no seu perfil é Diário, portanto ' \
+                        'você receberá mensagens todos os dias. Para receber mensagens ' \
+                        'apenas 1 vez por semana, você deve mudar a escala para ' \
+                        'Semanal, em Menu > Configurações > Configurações de Modo.\r\n' \
+                        'Selecione uma das opções:'
+                    text, keyboard = False, False
+                else:
+                    cb_text = 'MUDAR DIA\r\n' \
+                        'O dia programado atual é '+days[int(time)]+'.'
+                    text = 'Escolha abaixo o novo dia desejado:'
+                    keyboard = [[x] for x in days if not x == days[0]]
+            return cb_text, text, keyboard
+        else:
+            if choice == 0:
+                if re.match('^(([0-1][0-9])|([2][0-3]))[:][0-5][0-9]$', msg):
+                    db.info_upd(user_id, 'hour', msg)
+                    text = 'A hora programada foi atualizada com sucesso!\r\nAté mais!'
+                    success = True
+                else:
+                    text = 'Tente colocar a hora neste formato: "06:18", "13:45" (sem as aspas):'
+                    success = False
+            else:
+                if re.match(
+                        '^(Segunda-Feira|' \
+                        'Terça-Feira|' \
+                        'Quarta-Feira|' \
+                        'Quinta-Feira|' \
+                        'Sexta-Feira|' \
+                        'Sábado|' \
+                        'Domingo)$', msg):
+                    data = str(days.index(msg))
+                    db.info_upd(user_id, 'r_day', data)
+                    text = 'O dia programado foi atualizado com sucesso!\r\nAté mais!'
+                    success = True
+                else:
+                    text = 'Você deve selecionar o dia da lista. Tente novamente:'
+                    success = False
+            return text, success
+
+    def func_mode_upd(self, user_id, choice):
+        change = choice.split(',')
+        db.info_upd(user_id, 's_m', change[0])
+        db.info_upd(user_id, 'd_w', change[1])
+        sm_dw = {
+            'S,D': 'Small Caps/Diário',
+            'M,D': 'Mid Caps/Diário',
+            'S,W': 'Small Caps/Semanal',
+            'M,W': 'Mid Caps/Semanal',
+        }
+        text = 'O modo foi atualizado com sucesso! As mensagens automáticas de radar e ' \
+            'monitoramento de carteira possuirão classe de ações e escala ' \
+            'equivalentes a '+sm_dw[choice]+'.\r\nAté mais!'
+        return text

@@ -26,20 +26,20 @@ class Buttons():
             self.PORTF_CHANGE, self.PORTF_UPD = states_codes[num_states : num_states + x]
         num_states += x
         # Info
-        x = 1
-        self.INFO = states_codes[num_states : num_states + x]
+        x = 2
+        self.INFO, self.INFO_DUMMY = states_codes[num_states : num_states + x]
         num_states += x
         # Settings
         x = 3
         self.SET_TIME, self.SET_MODE, self.SET_RISK = states_codes[num_states : num_states + x]
         num_states += x
         # Time settings
-        x = 2
-        self.TIME_CHANGE, self.TIME_ACT_DEACT = states_codes[num_states : num_states + x]
+        x = 3
+        self.TIME_UPD, self.TIME_EXIT, self.TIME_ACT_DEACT = states_codes[num_states : num_states + x]
         num_states += x
         # Tracker radar mode settings
-        x = 4 
-        self.MODE_SM_DAY, self.MODE_SM_WEEK, self.MODE_MI_DAY, self.MODE_MI_WEEK = states_codes[num_states : num_states + x]
+        x = 2
+        self.MODE_UPD, self.MODE_DUMMY = states_codes[num_states : num_states + x]
         num_states += x
         # Risk management settings
         x = 2
@@ -133,17 +133,17 @@ class Buttons():
             IKB(text='Fechar', callback_data=self.EXIT)
         ]]
         self.all_states[self.MENU_PORTF] = [[
-            IKB(text='Adicionar ao valor', callback_data=self.PORTF_ADD),
-            IKB(text='Subtrair do valor', callback_data=self.PORTF_SUBTR)
+            IKB(text='Adicionar ao valor', callback_data='0'),
+            IKB(text='Subtrair do valor', callback_data='1')
         ], [
-            IKB(text='Substituir o valor', callback_data=self.PORTF_SUBST),
-            IKB(text='Zerar', callback_data=self.PORTF_CLEAR)
+            IKB(text='Substituir o valor', callback_data='2'),
+            IKB(text='Zerar', callback_data='3')
         ], [
             IKB(text='Voltar', callback_data=str(self.STOP)),
             IKB(text='Fechar', callback_data=self.EXIT)
         ]]
         self.all_states[self.MENU_SET] = [[
-            IKB(text='Configs de hora', callback_data=self.SET_TIME)
+            IKB(text='Mudar a hora/dia dos alertas automáticos', callback_data=self.SET_TIME)
         ], [
             IKB(text='Modo a ser usado automaticamente', callback_data=self.SET_MODE)
         ], [
@@ -153,19 +153,19 @@ class Buttons():
             IKB(text='Fechar', callback_data=self.EXIT)
         ]]
         self.all_states[self.SET_TIME] = [[
-            IKB(text='Mudar a hora dos alertas automáticos', callback_data=self.TIME_CHANGE)
+            IKB(text='Mudar a hora dos alertas automáticos', callback_data='0')
         ], [
-            IKB(text='Ativar/Desativar alertas automáticos', callback_data=self.TIME_ACT_DEACT)
+            IKB(text='Mudar o dia dos alertas automáticos', callback_data='1')
         ], [
             IKB(text='Voltar', callback_data=str(self.STOP)),
             IKB(text='Fechar', callback_data=self.EXIT)
         ]]
         self.all_states[self.SET_MODE] = [[
-            IKB(text='Small Caps/Diário', callback_data=self.RADAR_SM_DAY),
-            IKB(text='Mid Caps/Diário', callback_data=self.RADAR_MI_DAY)
+            IKB(text='Small Caps/Diário', callback_data='S,D'),
+            IKB(text='Mid Caps/Diário', callback_data='M,D')
         ], [
-            IKB(text='Small Caps/Semanal', callback_data=self.RADAR_SM_WEEK),
-            IKB(text='Mid Caps/Semanal', callback_data=self.RADAR_MI_WEEK)
+            IKB(text='Small Caps/Semanal', callback_data='S,W'),
+            IKB(text='Mid Caps/Semanal', callback_data='M,W')
         ], [
             IKB(text='Voltar', callback_data=str(self.STOP)),
             IKB(text='Fechar', callback_data=self.EXIT)

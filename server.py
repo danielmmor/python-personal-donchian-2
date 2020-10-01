@@ -42,20 +42,20 @@ PORTF_ADD, PORTF_SUBTR, PORTF_SUBST, PORTF_CLEAR, \
     PORTF_CHANGE, PORTF_UPD = states_codes[num_states : num_states + x]
 num_states += x
 # Info
-x = 1
-INFO = states_codes[num_states : num_states + x]
+x = 2
+INFO, INFO_DUMMY = states_codes[num_states : num_states + x]
 num_states += x
 # Settings
 x = 3
 SET_TIME, SET_MODE, SET_RISK = states_codes[num_states : num_states + x]
 num_states += x
 # Time settings
-x = 2
-TIME_CHANGE, TIME_ACT_DEACT = states_codes[num_states : num_states + x]
+x = 3
+TIME_UPD, TIME_EXIT, TIME_ACT_DEACT = states_codes[num_states : num_states + x]
 num_states += x
 # Tracker radar mode settings
-x = 4 
-MODE_SM_DAY, MODE_SM_WEEK, MODE_MI_DAY, MODE_MI_WEEK = states_codes[num_states : num_states + x]
+x = 2
+MODE_UPD, MODE_DUMMY = states_codes[num_states : num_states + x]
 num_states += x
 # Risk management settings
 x = 2
@@ -326,6 +326,7 @@ def menu(update, context):
 
 # Radar
 def menu_radar(update, context):
+    print('entrei no menu_radar')
     context.user_data[PREV_LEVEL] = menu
     #ordem = fc.func_ordem (?) db.get_ordem [ordenação, ordenar por]
     text = 'RADAR - Selecione o modo de análise ou modifique a ordenação dos resultados.\n\r' \
@@ -354,6 +355,7 @@ def order(update, context):
 
 # Tracker
 def menu_track(update, context):
+    print('entrei no menu_track')
     context.user_data[PREV_LEVEL] = menu
     user_id = update.effective_user.id
     text = 'CARTEIRA - Selecione uma das opções.\n\r' \
@@ -365,6 +367,7 @@ def menu_track(update, context):
     return TRACK_UPD
 
 def track_upd(update, context):
+    print('entrei no track_upd')
     context.user_data[PREV_LEVEL] = menu_track
     user_id = update.effective_user.id
     choice = int(update.callback_query.data)
@@ -386,11 +389,15 @@ def track_upd(update, context):
     return TRACK_EXIT
 
 def track_exit(update, context):
+    print('entrei no track_exit')
     user_id = update.message.chat_id
     msg = update.message.text
     choice = context.user_data['choice']
     text, success = fc.func_tickers_upd(user_id, msg, choice)
-    context.bot.deleteMessage(chat_id=user_id, message_id=context.user_data['msg_id'])
+    try:
+        context.bot.deleteMessage(chat_id=user_id, message_id=context.user_data['msg_id'])
+    except:
+        pass
     context.bot.sendMessage(chat_id=user_id, text=text)
     if not success: return TRACK_EXIT
     context.user_data[START_OVER] = False
@@ -398,7 +405,7 @@ def track_exit(update, context):
 
 # Portfolio
 def menu_portf(update, context):
-    print('entrei no menu portf')
+    print('entrei no menu_portf')
     context.user_data[PREV_LEVEL] = menu
     user_id = update.effective_user.id
     portf = db.get_info(user_id)[0][6]
@@ -411,13 +418,12 @@ def menu_portf(update, context):
     return PORTF_UPD
 
 def portf_upd(update, context):
+    print('entrei no portf_upd')
     context.user_data[PREV_LEVEL] = menu_portf
-    print('entrei no portf upd')
     user_id = update.effective_user.id
-    choice = update.callback_query.data
-    call_back = [PORTF_ADD, PORTF_SUBTR, PORTF_SUBST, PORTF_CLEAR]
-    context.user_data['choice'] = call_back.index(choice)
-    if choice == call_back[3]:
+    choice = int(update.callback_query.data)
+    context.user_data['choice'] = choice
+    if choice == 3:
         text = 'Tem certeza que deseja zerar o valor do capital?'
         keyboard = [['Sim'], ['Cancelar']]
         reply_markup = json.dumps({'keyboard': keyboard, 'one_time_keyboard': True})
@@ -426,7 +432,7 @@ def portf_upd(update, context):
         context.bot.sendMessage(chat_id=user_id, text='Escolha abaixo:', reply_markup=reply_markup)
     else:
         opts = ['adicionar', 'subtrair', 'substituir']
-        text = 'CAPITAL - Digite o valor a '+opts[call_back.index(choice)]+' ' \
+        text = 'CAPITAL - Digite o valor a '+opts[choice]+' ' \
             '(somente números) ou selecione uma das opções:'
         buttons = bt.buttons(EXIT)
         query_markup = IKM(buttons)
@@ -437,20 +443,23 @@ def portf_upd(update, context):
     return forward
 
 def portf_change(update, context):
-    print('entrei no portf change')
+    print('entrei no portf_change')
+    context.user_data[PREV_LEVEL] = portf_upd
     user_id = update.message.chat_id
     msg = update.message.text
     choice = context.user_data['choice']
     text, success = fc.func_portf_upd(user_id, msg, choice)
-    context.bot.deleteMessage(chat_id=user_id, message_id=context.user_data['msg_id'])
+    try:
+        context.bot.deleteMessage(chat_id=user_id, message_id=context.user_data['msg_id'])
+    except:
+        pass
     context.bot.sendMessage(chat_id=user_id, text=text)
     if not success: return PORTF_CHANGE
-    print('vou retornar EXIT')
     context.user_data[START_OVER] = False
     return EXITING
 
 def portf_clear(update, context):
-    print('entrei no portf clear')
+    print('entrei no portf_clear')
     user_id = update.message.chat_id
     msg = update.message.text
     if msg == 'Cancelar':
@@ -459,12 +468,12 @@ def portf_clear(update, context):
         choice = context.user_data['choice']
         text = fc.func_portf_upd(user_id, msg, choice)
     update.message.reply_text(text=text)
-    print('vou retornar EXIT')
     context.user_data[START_OVER] = False
     return EXITING
 
 # Info
 def menu_info(update, context):
+    print('entrei no menu_info')
     context.user_data[PREV_LEVEL] = menu
     user_id = update.effective_user.id
     text = fc.func_get_info(user_id)
@@ -476,44 +485,80 @@ def menu_info(update, context):
 
 # Settings
 def menu_set(update, context):
+    print('entrei no menu_set')
     context.user_data[PREV_LEVEL] = menu
     text = 'CONFIGURAÇÕES - Selecione uma das opções.'
     buttons = bt.buttons(MENU_SET)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
     context.user_data[START_OVER] = True
-    return MENU_SET
+    return SET_TIME
 
 # Time settings
 def set_time(update, context):
+    print('entrei no set_time')
     context.user_data[PREV_LEVEL] = menu_set
-    text = 'CONFIGURAÇÕES DE HORA - Selecione uma das opções.'
+    text = 'MUDAR HORA/DIA - Selecione uma das opções.'
     buttons = bt.buttons(SET_TIME)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
-    return SET_TIME
+    return TIME_UPD
 
 def time_upd(update, context):
-    return 'abc'
+    print('entrei no time_upd')
+    context.user_data[PREV_LEVEL] = set_time
+    user_id = update.effective_user.id
+    choice = int(update.callback_query.data)
+    context.user_data['choice'] = choice
+    cb_text, text, keyboard = fc.func_time_upd(user_id, 'A', choice)
+    buttons = bt.buttons(EXIT)
+    update.callback_query.answer()
+    send = update.callback_query.edit_message_text(text=cb_text, reply_markup=IKM(buttons))
+    context.user_data['msg_id'] = send.message_id
+    if keyboard: 
+        reply_markup = json.dumps({'keyboard': keyboard, 'one_time_keyboard': True})
+        context.bot.sendMessage(chat_id=user_id, text=text, reply_markup=reply_markup)
+    return TIME_EXIT
 
 def time_exit(update, context):
-    return 'confirmar sucesso da alteração'
+    print('entrei no time_exit')
+    user_id = update.message.chat_id
+    msg = update.message.text
+    choice = context.user_data['choice']
+    text, success = fc.func_time_upd(user_id, 'B', choice, msg)
+    try:
+        context.bot.deleteMessage(chat_id=user_id, message_id=context.user_data['msg_id'])
+    except:
+        pass
+    context.bot.sendMessage(chat_id=user_id, text=text)
+    if not success: return TIME_EXIT
+    context.user_data[START_OVER] = False
+    return EXITING
 
 # Radar mode settings
 def set_mode(update, context):
+    print('entrei no set_mode')
     context.user_data[PREV_LEVEL] = menu_set
     text = 'CONFIGURAÇÕES DE MODO - Selecione a classe de ativos ' \
            'e a escala temporal a serem usados no alerta automático.'
     buttons = bt.buttons(SET_MODE)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
-    return SET_MODE
+    return MODE_UPD
 
 def mode_upd(update, context):
-    return 'atualizar e confirmar sucesso'
+    print('entrei no mode_upd')
+    user_id = update.effective_user.id
+    choice = update.callback_query.data
+    text = fc.func_mode_upd(user_id, choice)
+    update.callback_query.answer()
+    update.callback_query.edit_message_text(text=text)
+    context.user_data[START_OVER] = False
+    return EXITING
 
 # Risk mngmt settings
 def set_risk(update, context):
+    print('entrei no set_risk')
     context.user_data[PREV_LEVEL] = menu_set
     text = 'CONFIGURAÇÕES DE RISCO - Selecione o gerenciamento de risco a ' \
            'ser utilizado no cálculo do volume:'
@@ -523,15 +568,18 @@ def set_risk(update, context):
     return SET_RISK
 
 def risk_upd(update, context):
+    print('entrei no risk_upd')
     #perguntar o número de bloquinhos/ porc após ter escolhido no anterior
     return 'abc'
 
 def risk_exit(update, context):
+    print('entrei no risk_exit')
     #confirmar sucesso
     return 'abc'
 
 # Help
 def menu_help(update, context):
+    print('entrei no menu_help')
     context.user_data[PREV_LEVEL] = menu
     text = 'AJUDA - Selecione um tópico:'
     buttons = bt.buttons(MENU_HELP)
@@ -541,6 +589,7 @@ def menu_help(update, context):
     return MENU_HELP
 
 def help_exit(update, context):
+    print('entrei no help_exit')
     context.user_data[PREV_LEVEL] = menu_help
     text = 'AJUDA - TITULO QUALQUER'
     buttons = bt.buttons(EXIT)
@@ -648,18 +697,9 @@ def main():
             EXITING: EXITING
         }
     )
-    set_mode_handlers = [
-        #CallbackQueryHandler(
-        #   mode_upd, 
-        #   pattern='^{0}$|^{1}$|^{2}$|^{3}$'.format(str(RADAR_SM_DAY),
-        #                                            str(RADAR_MI_DAY),
-        #                                            str(RADAR_SM_WEEK),
-        #                                            str(RADAR_MI_WEEK))
-        #)
-    ]
     set_mode_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(set_mode, pattern='^'+SET_MODE+'$')],
-        states={SET_MODE: set_mode_handlers,},
+        states={MODE_UPD: [CallbackQueryHandler(mode_upd, pattern='^(S|M),(D|W)$')]},
         fallbacks=[
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
@@ -669,19 +709,28 @@ def main():
             EXITING: EXITING
         }
     )
-    set_time_handlers = [
-        CallbackQueryHandler(time_upd, pattern='^{0}$|^{1}$'.format(TIME_CHANGE,
-                                                                    TIME_ACT_DEACT))
-    ]
-    set_time_conv = ConversationHandler(
-        entry_points=[CallbackQueryHandler(set_time, pattern='^'+SET_TIME+'$')],
-        states={SET_TIME: set_time_handlers,},
+    time_upd_conv = ConversationHandler(
+        entry_points=[CallbackQueryHandler(time_upd, pattern=r'^\d$')],
+        states={TIME_EXIT: [MessageHandler(Filters.text, time_exit)]},
         fallbacks=[
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
         ],
         map_to_parent={
-            STOP: MENU_SET,
+            STOP: TIME_UPD,
+            EXITING: EXITING
+        }
+    )
+    set_time_handlers = [time_upd_conv]
+    set_time_conv = ConversationHandler(
+        entry_points=[CallbackQueryHandler(set_time, pattern='^'+SET_TIME+'$')],
+        states={TIME_UPD: set_time_handlers,},
+        fallbacks=[
+            CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
+            CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
+        ],
+        map_to_parent={
+            STOP: SET_TIME,
             EXITING: EXITING
         }
     )
@@ -692,7 +741,7 @@ def main():
     ]
     menu_set_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(menu_set, pattern='^'+MENU_SET+'$')],
-        states={MENU_SET: menu_set_handlers,},
+        states={SET_TIME: menu_set_handlers,},
         fallbacks=[
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
@@ -704,10 +753,7 @@ def main():
     )
     # Portfolio
     portf_upd_conv = ConversationHandler(
-        entry_points=[CallbackQueryHandler(portf_upd, pattern='^'+PORTF_ADD+'|' \
-                                                              +PORTF_SUBTR+'|' \
-                                                              +PORTF_SUBST+'|' \
-                                                              +PORTF_CLEAR+'$')],
+        entry_points=[CallbackQueryHandler(portf_upd, pattern='^\d$')],
         states={
             PORTF_CHANGE: [MessageHandler(Filters.text, portf_change)],
             PORTF_CLEAR: [MessageHandler(Filters.text, portf_clear)]
@@ -718,7 +764,7 @@ def main():
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
         ],
         map_to_parent={
-            STOP: MENU_PORTF,
+            STOP: PORTF_UPD,
             EXITING: EXITING,
         }
     )
