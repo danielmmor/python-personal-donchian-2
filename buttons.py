@@ -43,7 +43,7 @@ class Buttons():
         num_states += x
         # Risk management settings
         x = 2
-        self.RISK_BLOCK, self.RISK_PERC = states_codes[num_states : num_states + x]
+        self.RISK_UPD, self.RISK_EXIT = states_codes[num_states : num_states + x]
         num_states += x
         # Help
         x = 7
@@ -171,9 +171,9 @@ class Buttons():
             IKB(text='Fechar', callback_data=self.EXIT)
         ]]
         self.all_states[self.SET_RISK] = [[
-            IKB(text='Bloquinho por operação', callback_data=self.RISK_BLOCK),
+            IKB(text='Bloquinho por operação', callback_data='B'),
         ], [
-            IKB(text='Porcentagem relativa ao stop', callback_data=self.RISK_PERC)
+            IKB(text='Porcentagem relativa ao stop', callback_data='P')
         ], [
             IKB(text='Voltar', callback_data=str(self.STOP)),
             IKB(text='Fechar', callback_data=self.EXIT)

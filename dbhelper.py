@@ -57,7 +57,7 @@ class DBHelper:
     def user_start(self, user_id, name, username, day):
         user_id = self.connect(user_id)
         stmt = [
-            'CREATE TABLE IF NOT EXISTS '+user_id+'(ticker TEXT)',
+            'CREATE TABLE IF NOT EXISTS '+user_id+'(ticker TEXT UNIQUE)',
             'INSERT INTO users (user_id, allowed, name, username, a_day, portf, hour, r_day) ' \
             'VALUES ("'+user_id+'", 0, "'+name+'", "@'+username+'", "'+day+'", 0, "08:00", 1)',
         ]

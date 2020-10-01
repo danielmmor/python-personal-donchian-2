@@ -1,3 +1,16 @@
+'''
+def constructor(word, forward):
+    def function(x):
+        print(word)
+        x += 2
+        return forward, x
+    return function
+
+set_mode = constructor('alo', 123)
+
+A, B = set_mode(4)
+print(A, B)
+'''
 import re
 import logging
 import json
@@ -59,7 +72,7 @@ MODE_UPD, MODE_DUMMY = states_codes[num_states : num_states + x]
 num_states += x
 # Risk management settings
 x = 2
-RISK_BLOCK, RISK_PERC = states_codes[num_states : num_states + x]
+RISK_UPD, RISK_EXIT = states_codes[num_states : num_states + x]
 num_states += x
 # Help
 x = 7
@@ -525,7 +538,7 @@ def time_exit(update, context):
     user_id = update.message.chat_id
     msg = update.message.text
     choice = context.user_data['choice']
-    text, success = fc.func_time_upd(user_id, 'B', choice, msg)
+    text, success = fc.func_time_exit(user_id, choice, msg)
     try:
         context.bot.deleteMessage(chat_id=user_id, message_id=context.user_data['msg_id'])
     except:
@@ -565,17 +578,32 @@ def set_risk(update, context):
     buttons = bt.buttons(SET_RISK)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
-    return SET_RISK
+    return RISK_UPD
 
 def risk_upd(update, context):
     print('entrei no risk_upd')
-    #perguntar o número de bloquinhos/ porc após ter escolhido no anterior
-    return 'abc'
+    user_id = update.effective_user.id
+    choice = update.callback_query.data
+    context.user_data['choice'] = choice
+    text = fc.func_risk_upd(user_id, choice)
+    update.callback_query.answer()
+    update.callback_query.edit_message_text(text=text)
+    return RISK_EXIT
 
 def risk_exit(update, context):
     print('entrei no risk_exit')
-    #confirmar sucesso
-    return 'abc'
+    user_id = update.message.chat_id
+    msg = update.message.text
+    choice = context.user_data['choice']
+    text, success = fc.func_risk_exit(user_id, choice, msg)
+    try:
+        context.bot.deleteMessage(chat_id=user_id, message_id=context.user_data['msg_id'])
+    except:
+        pass
+    context.bot.sendMessage(chat_id=user_id, text=text)
+    if not success: return RISK_EXIT
+    context.user_data[START_OVER] = False
+    return EXITING
 
 # Help
 def menu_help(update, context):
@@ -681,13 +709,12 @@ def main():
         }
     )
     # Settings
-    set_risk_handlers = [
-        CallbackQueryHandler(risk_upd, pattern='^{0}$|^{1}$'.format(RISK_BLOCK,
-                                                                    RISK_PERC))
-    ]
     set_risk_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(set_risk, pattern='^'+str(SET_RISK)+'$')],
-        states={SET_RISK: set_risk_handlers,},
+        states={
+            RISK_UPD: [CallbackQueryHandler(risk_upd, pattern='^(B|P)$')],
+            RISK_EXIT: [MessageHandler(Filters.text, risk_exit)]
+        },
         fallbacks=[
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
@@ -753,7 +780,7 @@ def main():
     )
     # Portfolio
     portf_upd_conv = ConversationHandler(
-        entry_points=[CallbackQueryHandler(portf_upd, pattern='^\d$')],
+        entry_points=[CallbackQueryHandler(portf_upd, pattern=r'^\d$')],
         states={
             PORTF_CHANGE: [MessageHandler(Filters.text, portf_change)],
             PORTF_CLEAR: [MessageHandler(Filters.text, portf_clear)]

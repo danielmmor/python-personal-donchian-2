@@ -7,6 +7,17 @@ from dbhelper import DBHelper
 db = DBHelper()
 
 class Functions():
+    def __init__(self):
+        self.days = [
+            'todos os dias',
+            'Segunda-Feira',
+            'Terça-Feira',
+            'Quarta-Feira',
+            'Quinta-Feira',
+            'Sexta-Feira',
+            'Sábado',
+            'Domingo',
+        ]
     def func_time(self, var, separator):
         if separator == '/':
             new_format = datetime.strptime(var,f'%d/%m/%Y').strftime(f'%Y-%m-%d')
@@ -97,11 +108,11 @@ class Functions():
             return response, False
         
     def func_init_check(self, mode, data):
-        if mode == 'B' and not re.match('^[1-9]+\d*$', data):
+        if mode == 'B' and not re.match(r'^[1-9]+\d*$', data):
             text = 'Formato inválido. Digite o valor dos bloquinhos neste formato ' \
                 '(somente números, sem aspas): "8" ou "12". Tente novamente:'
             return text, False
-        elif mode == 'P' and not re.match('^\d+(([,]\d+)|)$', data):
+        elif mode == 'P' and not re.match(r'^\d+(([,]\d+)|)$', data):
             text = 'Formato inválido. Digite o valor do porcentual neste formato ' \
                 '(somente números, sem aspas): "1,5" ou "2". Tente novamente:'
             return text, False
@@ -111,7 +122,7 @@ class Functions():
                 'automático do volume a ser comprado (ex.: "1234,56", sem as aspas).'
             return text, True
         elif mode == 'p':
-            if not re.match('^\d+(([,]\d+)|)$', data):
+            if not re.match(r'^\d+(([,]\d+)|)$', data):
                 text = 'Formato inválido. Digite o valor do capital neste formato (somente números, sem aspas): ' \
                     '"1234,56" ou digite "0" se não quiser responder. Tente novamente:'
                 return text, False
@@ -124,17 +135,7 @@ class Functions():
         info = db.get_info(user_id)
         stock = 'Small Caps' if info[0][7] == 'S' else 'Mid Caps'
         freq = 'Diário' if info[0][8] == 'D' else 'Semanal'
-        days = [
-            'todos os dias',
-            'Segunda-Feira',
-            'Terça-Feira',
-            'Quarta-Feira',
-            'Quinta-Feira',
-            'Sexta-Feira',
-            'Sábado',
-            'Domingo',
-        ]
-        day = days[0] if info[0][8] == 'D' else days[int(info[0][10])]
+        day = self.days[0] if info[0][8] == 'D' else self.days[int(info[0][10])]
         if info[0][11] == 'B':
             risk = 'Bloquinho por operação\n\rBloquinhos: '+info[0][12]+''
         else:
@@ -149,7 +150,7 @@ class Functions():
         return text
 
     def func_portf_upd(self, user_id, msg, choice):
-        if choice < 3 and re.match('^\d+(([,]\d+)|)$', msg):
+        if choice < 3 and re.match(r'^\d+(([,]\d+)|)$', msg):
             if msg.rfind(','): msg = msg.replace(',', '.')
             msg = float(msg)
             port = db.get_info(user_id)[0][6]
@@ -181,7 +182,7 @@ class Functions():
         return text
 
     def func_tickers_upd(self, user_id, msg, choice):
-        if re.match('^[a-zA-Z]{4}(\d|\d\d)$', msg):
+        if re.match(r'^[a-zA-Z]{4}(\d|\d\d)$', msg):
             success = db.tickers_upd(user_id, msg, choice)
             action = ['adicionado', 'removido']
             if success:
@@ -193,65 +194,55 @@ class Functions():
             text ='Tente colocar o índice neste formato: "PETR4" (sem as aspas):'
         return text, success
 
-    def func_time_upd(self, user_id, step, choice, msg=''):
-        days = [
-            'todos os dias',
-            'Segunda-Feira',
-            'Terça-Feira',
-            'Quarta-Feira',
-            'Quinta-Feira',
-            'Sexta-Feira',
-            'Sábado',
-            'Domingo',
-        ]
-        if step == 'A':
-            time = db.get_info(user_id)[0][9+choice]
-            if choice == 0:
-                cb_text = 'MUDAR HORA\r\n' \
-                    'A hora programada atual é '+time+'. Digite a nova hora ' \
-                    'desejada ou selecione uma das opções:'
+    def func_time_upd(self, user_id, choice, msg=''):
+        time = db.get_info(user_id)[0][9+choice]
+        if choice == 0:
+            cb_text = 'MUDAR HORA\r\n' \
+                'A hora programada atual é '+time+'. Digite a nova hora ' \
+                'desejada ou selecione uma das opções:'
+            text, keyboard = False, False
+        else:
+            d_w = db.get_info(user_id)[0][8]
+            if d_w == 'D':
+                cb_text = 'A escala programada no seu perfil é Diário, portanto ' \
+                    'você receberá mensagens todos os dias. Para receber mensagens ' \
+                    'apenas 1 vez por semana, você deve mudar a escala para ' \
+                    'Semanal, em Menu > Configurações > Configurações de Modo.\r\n' \
+                    'Selecione uma das opções:'
                 text, keyboard = False, False
             else:
-                d_w = db.get_info(user_id)[0][8]
-                if d_w == 'D':
-                    cb_text = 'A escala programada no seu perfil é Diário, portanto ' \
-                        'você receberá mensagens todos os dias. Para receber mensagens ' \
-                        'apenas 1 vez por semana, você deve mudar a escala para ' \
-                        'Semanal, em Menu > Configurações > Configurações de Modo.\r\n' \
-                        'Selecione uma das opções:'
-                    text, keyboard = False, False
-                else:
-                    cb_text = 'MUDAR DIA\r\n' \
-                        'O dia programado atual é '+days[int(time)]+'.'
-                    text = 'Escolha abaixo o novo dia desejado:'
-                    keyboard = [[x] for x in days if not x == days[0]]
-            return cb_text, text, keyboard
-        else:
-            if choice == 0:
-                if re.match('^(([0-1][0-9])|([2][0-3]))[:][0-5][0-9]$', msg):
-                    db.info_upd(user_id, 'hour', msg)
-                    text = 'A hora programada foi atualizada com sucesso!\r\nAté mais!'
-                    success = True
-                else:
-                    text = 'Tente colocar a hora neste formato: "06:18", "13:45" (sem as aspas):'
-                    success = False
+                cb_text = 'MUDAR DIA\r\n' \
+                    'O dia programado atual é '+self.days[int(time)]+'.'
+                text = 'Escolha abaixo o novo dia desejado:'
+                keyboard = [[x] for x in self.days if not x == self.days[0]]
+        return cb_text, text, keyboard
+        
+    def func_time_exit(self, user_id, choice, msg):
+        if choice == 0:
+            if re.match('^(([0-1][0-9])|([2][0-3]))[:][0-5][0-9]$', msg):
+                db.info_upd(user_id, 'hour', msg)
+                text = 'A hora programada foi atualizada com sucesso!\r\nAté mais!'
+                success = True
             else:
-                if re.match(
-                        '^(Segunda-Feira|' \
-                        'Terça-Feira|' \
-                        'Quarta-Feira|' \
-                        'Quinta-Feira|' \
-                        'Sexta-Feira|' \
-                        'Sábado|' \
-                        'Domingo)$', msg):
-                    data = str(days.index(msg))
-                    db.info_upd(user_id, 'r_day', data)
-                    text = 'O dia programado foi atualizado com sucesso!\r\nAté mais!'
-                    success = True
-                else:
-                    text = 'Você deve selecionar o dia da lista. Tente novamente:'
-                    success = False
-            return text, success
+                text = 'Tente colocar a hora neste formato: "06:18", "13:45" (sem as aspas):'
+                success = False
+        else:
+            if re.match(
+                    '^(Segunda-Feira|' \
+                    'Terça-Feira|' \
+                    'Quarta-Feira|' \
+                    'Quinta-Feira|' \
+                    'Sexta-Feira|' \
+                    'Sábado|' \
+                    'Domingo)$', msg):
+                data = str(self.days.index(msg))
+                db.info_upd(user_id, 'r_day', data)
+                text = 'O dia programado foi atualizado com sucesso!\r\nAté mais!'
+                success = True
+            else:
+                text = 'Você deve selecionar o dia da lista. Tente novamente:'
+                success = False
+        return text, success
 
     def func_mode_upd(self, user_id, choice):
         change = choice.split(',')
@@ -267,3 +258,26 @@ class Functions():
             'monitoramento de carteira possuirão classe de ações e escala ' \
             'equivalentes a '+sm_dw[choice]+'.\r\nAté mais!'
         return text
+    
+    def func_risk_upd(self, user_id, choice):
+        db.info_upd(user_id, 'b_p', choice)
+        if choice == 'B':
+            text = 'Agora, digite o número de bloquinhos que serão utilizados (ex.: "8", sem as aspas):'
+        else:
+            text = 'Agora, digite o porcentual de risco (ex.: "1,5", sem as aspas):'
+        return text
+    
+    def func_risk_exit(self, user_id, choice, msg):
+        if choice == 'B' and not re.match(r'^[1-9]+\d*$', msg):
+            text = 'Formato inválido. Digite o valor dos bloquinhos neste formato ' \
+                '(somente números, sem aspas): "8" ou "12". Tente novamente:'
+            success = False
+        elif choice == 'P' and not re.match(r'^\d+(([,]\d+)|)$', msg):
+            text = 'Formato inválido. Digite o valor do porcentual neste formato ' \
+                '(somente números, sem aspas): "1,5" ou "2". Tente novamente:'
+            success = False
+        else:
+            db.info_upd(user_id, 'b_p_set', msg)
+            text = 'Pronto! Seu gerenciamento de risco já está configurado.\r\nAté mais!'
+            success = True
+        return text, success
