@@ -1,13 +1,16 @@
 '''
 ***TABLE users***
 user_id +++++ name +++++ username +++++ email +++++ allowed +++++ allowed_day +++++ \
-              portf +++++ small/mid +++++ daily/week +++++ hour +++++ radar_day +++++ blocks/perc +++++ 8/1%
+    portf +++++ small/midlarge +++++ daily/week +++++ hour +++++ radar_day +++++ blocks/perc +++++ 8/1%
 
 (radar_day: segunda 1, terça 2...)
 
 ***TABLE stocks_small***
-ticker +++++ eod
-
+ticker
+07/10/2020
+AAAA3
+AAAB3
+AAAC3
 .
 .
 .
@@ -24,15 +27,15 @@ class DBHelper:
     def connect(self, user_id=''):
         dbname = 'DB.sqlite'
         self.conn = sqlite3.connect(dbname)
-        if user_id: return ('a'+str(user_id))
+        if user_id: return str(user_id)
 
     def setup(self):
         self.connect()
         stmt = [
             'CREATE TABLE IF NOT EXISTS users' \
                 '(user_id TEXT UNIQUE, name TEXT, username TEXT, email TEXT, ' \
-                'allowed TEXT, a_day DATE, portf TEXT, s_m TEXT, d_w TEXT, ' \
-                'hour TEXT, r_day TEXT, b_p TEXT, b_p_set TEXT)',
+                'allowed TEXT, a_day DATE, portf TEXT, S_M TEXT, D_W TEXT, ' \
+                'hour TEXT, r_day TEXT, B_P TEXT, B_P_set TEXT)',
             'CREATE INDEX IF NOT EXISTS idIndex ON users(user_id ASC)',
             'CREATE INDEX IF NOT EXISTS nameIndex ON users(name ASC)',
             'CREATE INDEX IF NOT EXISTS usuarioIndex ON users(username ASC)',
@@ -40,15 +43,10 @@ class DBHelper:
             'CREATE INDEX IF NOT EXISTS dayIndex ON users(a_day ASC)',
             # Sempre puxar os EOD da tabela normal, só atualizar do NEW pro normal se pegar
             # a lista de small caps e os EOD com sucesso, ao mesmo tempo.
-            'CREATE TABLE IF NOT EXISTS stocks_small(ticker TEXT UNIQUE, eod TEXT)',
-            'CREATE TABLE IF NOT EXISTS stocks_mid(ticker TEXT UNIQUE, eod TEXT)',
-            'CREATE TABLE IF NOT EXISTS stocks_small_new(ticker TEXT UNIQUE, eod TEXT)',
-            'CREATE TABLE IF NOT EXISTS stocks_mid_new(ticker TEXT UNIQUE, eod TEXT)',
-            # A primeira linha conterá a data de atualização daqueles eod
-            'INSERT OR IGNORE INTO stocks_small (ticker) VALUES (1)',
-            'INSERT OR IGNORE INTO stocks_mid (ticker) VALUES (1)',
-            'INSERT OR IGNORE INTO stocks_small_new (ticker) VALUES (1)',
-            'INSERT OR IGNORE INTO stocks_mid_new (ticker) VALUES (1)',
+            'CREATE TABLE IF NOT EXISTS stocks_S(ticker TEXT UNIQUE, eod TEXT)',
+            'CREATE TABLE IF NOT EXISTS stocks_M(ticker TEXT UNIQUE, eod TEXT)',
+            'CREATE TABLE IF NOT EXISTS stocks_SN(ticker TEXT UNIQUE, eod TEXT)',
+            'CREATE TABLE IF NOT EXISTS stocks_MN(ticker TEXT UNIQUE, eod TEXT)',
         ]
         for s in stmt:
             self.conn.execute(s)
@@ -57,7 +55,7 @@ class DBHelper:
     def user_start(self, user_id, name, username, day):
         user_id = self.connect(user_id)
         stmt = [
-            'CREATE TABLE IF NOT EXISTS '+user_id+'(ticker TEXT UNIQUE)',
+            'CREATE TABLE IF NOT EXISTS "'+user_id+'"(ticker TEXT UNIQUE)',
             'INSERT INTO users (user_id, allowed, name, username, a_day, portf, hour, r_day) ' \
             'VALUES ("'+user_id+'", 0, "'+name+'", "@'+username+'", "'+day+'", 0, "08:00", 1)',
         ]
@@ -110,7 +108,7 @@ class DBHelper:
     
     def user_init(self, user_id, all_data):
         user_id = self.connect(user_id)
-        field = ['s_m', 'd_w', 'b_p', 'b_p_set', 'portf']
+        field = ['S_M', 'D_W', 'B_P', 'B_P_set', 'portf']
         for i in range(len(field)):
             s = 'UPDATE users SET '+field[i]+' = ("'+all_data[i]+'") WHERE user_id = ("'+user_id+'")'
             self.conn.execute(s)
@@ -118,18 +116,18 @@ class DBHelper:
 
     def get_info(self, user_id):
         # q[0] - 0: user_id
-        # 1: name
-        # 2: username
-        # 3: email
-        # 4: allowed
-        # 5: a_day
-        # 6: portf
-        # 7: S_M
-        # 8: D_W
-        # 9: hour
-        # 10: r_day
-        # 11: B_P
-        # 12: 8/1%
+        # 1: name - Abc
+        # 2: username - @Abc
+        # 3: email - abc@dce.fg
+        # 4: allowed - 0/1
+        # 5: a_day - 2020-01-20
+        # 6: portf - 123,45
+        # 7: S_M - S/M
+        # 8: D_W - D_W
+        # 9: hour - 13:45
+        # 10: r_day - 0~7
+        # 11: B_P - B/P
+        # 12: B_P_set - 8/1%
         user_id = self.connect(user_id)
         stmt = 'SELECT * FROM users WHERE user_id = ("'+user_id+'")'
         q = [x for x in self.conn.execute(stmt)]
@@ -141,21 +139,32 @@ class DBHelper:
         self.conn.execute(stmt)
         self.conn.commit()
 
-    def get_tickers(self, user_id):
-        user_id = self.connect(user_id)
-        stmt = 'SELECT * FROM '+user_id
+    def get_tickers(self, table):
+        table = self.connect(table)
+        stmt = 'SELECT * FROM "'+table+'"'
         q = [x for x in self.conn.execute(stmt)]
         return q
 
-    def tickers_upd(self, user_id, ticker, choice):
+    def tickers_upd_user(self, user_id, ticker, choice):
         user_id = self.connect(user_id)
         if choice == 0:
-            stmt = 'INSERT OR IGNORE INTO '+user_id+' (ticker) VALUES ("'+ticker+'")'
+            stmt = 'INSERT OR IGNORE INTO "'+user_id+'" (ticker) VALUES ("'+ticker+'")'
         else:
-            stmt = 'DELETE FROM '+user_id+' WHERE ticker = ("'+ticker+'")'
+            stmt = 'DELETE FROM "'+user_id+'" WHERE ticker = ("'+ticker+'")'
         try:
             self.conn.execute(stmt)
             self.conn.commit()
             return True
         except:
             return False
+
+    def tickers_upd(self, table, tickers_list, date):
+        self.connect()
+        del_stmt = 'DELETE FROM stocks_'+table
+        date_stmt = 'INSERT INTO stocks_'+table+' (ticker) VALUES ("'+date+'")'
+        self.conn.execute(del_stmt)
+        self.conn.execute(date_stmt)
+        for ticker in tickers_list:
+            stmt = 'INSERT INTO stocks_'+table+' (ticker) VALUES ("'+ticker+'")'
+            self.conn.execute(stmt)
+        self.conn.commit()

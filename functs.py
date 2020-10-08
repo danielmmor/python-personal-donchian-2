@@ -133,7 +133,7 @@ class Functions():
     
     def func_get_info(self, user_id):
         info = db.get_info(user_id)
-        stock = 'Small Caps' if info[0][7] == 'S' else 'Mid Caps'
+        stock = 'Small Caps' if info[0][7] == 'S' else 'Mid Large Caps'
         freq = 'Diário' if info[0][8] == 'D' else 'Semanal'
         day = self.days[0] if info[0][8] == 'D' else self.days[int(info[0][10])]
         if info[0][11] == 'B':
@@ -172,7 +172,7 @@ class Functions():
             text = 'Formato inválido. Tente colocar o valor neste formato (somente números): "1234,56"'
             return text, False
 
-    def func_get_tickers(self, user_id):
+    def func_get_tickers_user(self, user_id):
         t_list = db.get_tickers(user_id)
         if t_list:
             t_list = [x[0] for x in t_list]
@@ -181,9 +181,9 @@ class Functions():
             text = 'A sua carteira está vazia!'
         return text
 
-    def func_tickers_upd(self, user_id, msg, choice):
+    def func_tickers_upd_user(self, user_id, msg, choice):
         if re.match(r'^[a-zA-Z]{4}(\d|\d\d)$', msg):
-            success = db.tickers_upd(user_id, msg, choice)
+            success = db.tickers_upd_user(user_id, msg, choice)
             action = ['adicionado', 'removido']
             if success:
                 text = 'O ativo '+msg+' foi '+action[choice]+' com sucesso!\nAté mais!'
@@ -246,13 +246,13 @@ class Functions():
 
     def func_mode_upd(self, user_id, choice):
         change = choice.split(',')
-        db.info_upd(user_id, 's_m', change[0])
-        db.info_upd(user_id, 'd_w', change[1])
+        db.info_upd(user_id, 'S_M', change[0])
+        db.info_upd(user_id, 'D_W', change[1])
         sm_dw = {
             'S,D': 'Small Caps/Diário',
-            'M,D': 'Mid Caps/Diário',
+            'M,D': 'Mid Large Caps/Diário',
             'S,W': 'Small Caps/Semanal',
-            'M,W': 'Mid Caps/Semanal',
+            'M,W': 'Mid Large Caps/Semanal',
         }
         text = 'O modo foi atualizado com sucesso! As mensagens automáticas de radar e ' \
             'monitoramento de carteira possuirão classe de ações e escala ' \
@@ -260,7 +260,7 @@ class Functions():
         return text
     
     def func_risk_upd(self, user_id, choice):
-        db.info_upd(user_id, 'b_p', choice)
+        db.info_upd(user_id, 'B_P', choice)
         if choice == 'B':
             text = 'Agora, digite o número de bloquinhos que serão utilizados (ex.: "8", sem as aspas):'
         else:
@@ -277,7 +277,7 @@ class Functions():
                 '(somente números, sem aspas): "1,5" ou "2". Tente novamente:'
             success = False
         else:
-            db.info_upd(user_id, 'b_p_set', msg)
+            db.info_upd(user_id, 'B_P_set', msg)
             text = 'Pronto! Seu gerenciamento de risco já está configurado.\r\nAté mais!'
             success = True
         return text, success

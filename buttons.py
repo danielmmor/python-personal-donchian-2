@@ -13,7 +13,7 @@ class Buttons():
         num_states += x
         # Radar
         x = 5
-        self.RADAR_SM_DAY, self.RADAR_SM_WEEK, self.RADAR_MI_DAY, self.RADAR_MI_WEEK, \
+        self.RADAR_SM_DAY, self.RADAR_SM_WEEK, self.RADAR_ML_DAY, self.RADAR_ML_WEEK, \
             self.RADAR_ORDER = states_codes[num_states : num_states + x]
         num_states += x
         # Ticker tracker
@@ -70,7 +70,7 @@ class Buttons():
         # deprecated
         self.all_states[self.INIT_SET_A] = [[
             IKB(text='Small Caps', callback_data='S'),
-            IKB(text='Mid Caps', callback_data='M')
+            IKB(text='Mid Large Caps', callback_data='M')
         ]]
         # deprecated
         self.all_states[self.INIT_SET_B] = [[
@@ -97,10 +97,11 @@ class Buttons():
         ]]
         self.all_states[self.MENU_RADAR] = [[
             IKB(text='Small Caps/Diário', callback_data=self.RADAR_SM_DAY),
-            IKB(text='Mid Caps/Diário', callback_data=self.RADAR_MI_DAY)
+            IKB(text='Small Caps/Semanal', callback_data=self.RADAR_SM_WEEK)
         ], [
-            IKB(text='Small Caps/Semanal', callback_data=self.RADAR_SM_WEEK),
-            IKB(text='Mid Caps/Semanal', callback_data=self.RADAR_MI_WEEK)
+            IKB(text='Mid Large Caps/Diário', callback_data=self.RADAR_ML_DAY)
+        ], [
+            IKB(text='Mid Large Caps/Semanal', callback_data=self.RADAR_ML_WEEK)
         ], [
             IKB(text='Ordenar resultados por...', callback_data=self.RADAR_ORDER)
         ], [
@@ -162,10 +163,11 @@ class Buttons():
         ]]
         self.all_states[self.SET_MODE] = [[
             IKB(text='Small Caps/Diário', callback_data='S,D'),
-            IKB(text='Mid Caps/Diário', callback_data='M,D')
+            IKB(text='Small Caps/Semanal', callback_data='S,W')
         ], [
-            IKB(text='Small Caps/Semanal', callback_data='S,W'),
-            IKB(text='Mid Caps/Semanal', callback_data='M,W')
+            IKB(text='Mid Large Caps/Diário', callback_data='M,D')
+        ], [
+            IKB(text='Mid Large Caps/Semanal', callback_data='M,W')
         ], [
             IKB(text='Voltar', callback_data=str(self.STOP)),
             IKB(text='Fechar', callback_data=self.EXIT)

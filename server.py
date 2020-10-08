@@ -11,12 +11,12 @@ set_mode = constructor('alo', 123)
 A, B = set_mode(4)
 print(A, B)
 '''
-import re
 import logging
 import json
 import configparser as cfg
-import requests
 import string
+import schedule
+import time
 from functools import wraps
 from telegram import (InlineKeyboardMarkup as IKM, InlineKeyboardButton as IKB)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
@@ -24,6 +24,7 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
 from buttons import Buttons
 from dbhelper import DBHelper
 from functs import Functions
+from radar import Radar
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -42,7 +43,7 @@ MENU_RADAR, MENU_TRACK, MENU_PORTF, MENU_INFO, \
 num_states += x
 # Radar
 x = 5
-RADAR_SM_DAY, RADAR_SM_WEEK, RADAR_MI_DAY, RADAR_MI_WEEK, \
+RADAR_SM_DAY, RADAR_SM_WEEK, RADAR_ML_DAY, RADAR_ML_WEEK, \
     RADAR_ORDER = states_codes[num_states : num_states + x]
 num_states += x
 # Ticker tracker
@@ -101,10 +102,12 @@ def read_token(config):
     return parser.get('creds', 'token')
 
 def init():
-    global db, fc, bt, RKR, ADMS_LIST, TOKEN, ADMIN_OPTS, INIT
+    global db, fc, bt, rd, RKR, ADMS_LIST, TOKEN, ADMIN_OPTS, INIT
     db = DBHelper()
+    db.setup()
     fc = Functions()
     bt = Buttons()
+    rd = Radar()
     RKR = json.dumps({'remove_keyboard':True})
     # ADMINS: [Daniel Moreira]
     ADMS_LIST = [545699841]
@@ -117,13 +120,6 @@ def init():
         'Pesquisar por data'
     ]
     INIT = False
-    db.setup()
-
-def send_msg(user, msg, msg_id='', reply_markup=''):
-    url = f'https://api.telegram.org/bot{TOKEN}/sendMessage?' \
-          f'chat_id={user}&text={msg}&reply_to_message_id={msg_id}&' \
-          f'reply_markup={reply_markup}&parse_mode=HTML'
-    requests.get(url)
 
 def restricted(func):
     @wraps(func)
@@ -131,7 +127,7 @@ def restricted(func):
         user_id = update.effective_user.id
         if user_id not in ADMS_LIST:
             text = 'Unauthorized access'
-            send_msg(user_id, text)
+            context.bot.sendMessage(chat_id=user_id, text=text)
             return
         return func(update, context, *args, **kwargs)
     return wrapped
@@ -152,8 +148,8 @@ def start(update, context):
         context.bot.leaveChat(chat_id=user_id)
     else:
         admin_text, user_text = fc.func_user_start(user_id, name, username)
-        send_msg(user_id, user_text)
-        send_msg(ADMS_LIST[0], admin_text)
+        context.bot.sendMessage(chat_id=user_id, text=user_text)
+        context.bot.sendMessage(chat_id=ADMS_LIST[0], text=admin_text)
 
 @restricted
 def admin_a(update, context):
@@ -163,7 +159,12 @@ def admin_a(update, context):
     admin_text = 'Selecione uma das opções de adm ou clique em /cancelar:'
     keyboard = [[x] for x in ADMIN_OPTS]
     reply_markup = json.dumps({'keyboard': keyboard, 'one_time_keyboard': True})
-    send_msg(curr_admin_id, admin_text, msg_id, reply_markup)
+    context.bot.sendMessage(
+        chat_id=curr_admin_id, 
+        text=admin_text, 
+        reply_to_message_id=msg_id, 
+        reply_markup=reply_markup
+    )
     return ADMIN_B
 
 def admin_b(update, context):
@@ -187,7 +188,12 @@ def admin_b(update, context):
         elif choice == 4:
             admin_text = f'{ADMIN_OPTS[choice]} - digite as datas inicial e final, separadas por vírgulas ' \
                     '(exemplo "15/02/2020, 26/02/2020") ou clique em /cancelar:'
-        send_msg(curr_admin_id, admin_text, msg_id, RKR)
+        context.bot.sendMessage(
+            chat_id=curr_admin_id, 
+            text=admin_text, 
+            reply_to_message_id=msg_id, 
+            reply_markup=RKR
+        )
         return ADMIN_C
 
 def admin_c(update, context):
@@ -195,7 +201,11 @@ def admin_c(update, context):
     msg = update.message.text
     choice = context.user_data['selection']
     admin_text, success = fc.func_admin(msg, choice)
-    send_msg(curr_admin_id, admin_text, msg_id)
+    context.bot.sendMessage(
+        chat_id=curr_admin_id, 
+        text=admin_text, 
+        reply_to_message_id=msg_id
+    )
     if success:
         if choice == 0:
             msg = msg.split(', ')
@@ -223,9 +233,9 @@ def init_set_a(context):
            'configurar o seu perfil em poucos passos. Você vai poder modificar depois se quiser.'
     context.bot.sendMessage(chat_id=user_id, text=text)
     text = 'Primeiro, qual classe de ações você irá utilizar com mais frequência?'
-    keyboard = [['Small Caps'], ['Mid Caps']]
+    keyboard = [['Small Caps'], ['Mid Large Caps']]
     reply_markup = json.dumps({'keyboard': keyboard, 'one_time_keyboard': True})
-    send_msg(user_id, text, '', reply_markup)
+    context.bot.sendMessage(chat_id=user_id, text=text, reply_markup=reply_markup)
     return INIT_SET_B
 
 def init_set_b(update, context):
@@ -235,11 +245,16 @@ def init_set_b(update, context):
     user_id = update.message.chat_id
     msg_id = update.message.message_id
     msg = update.message.text
-    A, B = 'Small Caps', 'Mid Caps'
+    A, B = 'Small Caps', 'Mid Large Caps'
     if msg not in [A, B]:
         text = 'Resposta inválida. Tente novamente:'
         reply_markup = json.dumps({'keyboard': [[A], [B]], 'one_time_keyboard': True})
-        send_msg(user_id, text, msg_id, reply_markup)
+        context.bot.sendMessage(
+            chat_id=user_id, 
+            text=text, 
+            reply_to_message_id=msg_id, 
+            reply_markup=reply_markup
+        )
         return INIT_SET_B
     else:
         context.user_data['init_set'] = []
@@ -248,7 +263,7 @@ def init_set_b(update, context):
         text = 'Certo. Agora, qual escala temporal você prefere?'
         keyboard = [['Diário'], ['Semanal']]
         reply_markup = json.dumps({'keyboard': keyboard, 'one_time_keyboard': True})
-        send_msg(user_id, text, '', reply_markup)
+        context.bot.sendMessage(chat_id=user_id, text=text, reply_markup=reply_markup)
         return INIT_SET_C
 
 def init_set_c(update, context):
@@ -259,7 +274,12 @@ def init_set_c(update, context):
     if msg not in [A, B]:
         text = 'Resposta inválida. Tente novamente:'
         reply_markup = json.dumps({'keyboard': [[A], [B]], 'one_time_keyboard': True})
-        send_msg(user_id, text, msg_id, reply_markup)
+        context.bot.sendMessage(
+            chat_id=user_id, 
+            text=text, 
+            reply_to_message_id=msg_id, 
+            reply_markup=reply_markup
+        )
         return INIT_SET_C
     else:
         x = 'D' if msg == A else 'W'
@@ -267,7 +287,7 @@ def init_set_c(update, context):
         text = 'Ok. Qual gerenciamento de risco é mais adequado para você?'
         keyboard = [['Bloquinho por operação'], ['Porcentagem relativa ao stop']]
         reply_markup = json.dumps({'keyboard': keyboard, 'one_time_keyboard': True})
-        send_msg(user_id, text, '', reply_markup)
+        context.bot.sendMessage(chat_id=user_id, text=text, reply_markup=reply_markup)
         return INIT_SET_D
 
 def init_set_d(update, context):
@@ -278,7 +298,12 @@ def init_set_d(update, context):
     if msg not in [A, B]:
         text = 'Resposta inválida. Tente novamente:'
         reply_markup = json.dumps({'keyboard': [[A], [B]], 'one_time_keyboard': True})
-        send_msg(user_id, text, msg_id, reply_markup)
+        context.bot.sendMessage(
+            chat_id=user_id, 
+            text=text, 
+            reply_to_message_id=msg_id, 
+            reply_markup=reply_markup
+        )
         return INIT_SET_D
     else:
         if msg == A:
@@ -288,7 +313,7 @@ def init_set_d(update, context):
             x = 'P'
             text = 'Agora, digite o porcentual de risco (ex.: "1,5", sem as aspas):'
         context.user_data['init_set'].append(x)
-        send_msg(user_id, text, '', '')
+        context.bot.sendMessage(chat_id=user_id, text=text)
         return INIT_SET_E
 
 def init_set_e(update, context):
@@ -372,7 +397,7 @@ def menu_track(update, context):
     context.user_data[PREV_LEVEL] = menu
     user_id = update.effective_user.id
     text = 'CARTEIRA - Selecione uma das opções.\n\r' \
-           'Composição atual da carteira:\n\r'+fc.func_get_tickers(user_id)
+           'Composição atual da carteira:\n\r'+fc.func_get_tickers_user(user_id)
     buttons = bt.buttons(MENU_TRACK)
     update.callback_query.answer()
     update.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
@@ -388,7 +413,7 @@ def track_upd(update, context):
     if choice == 0:
         text = 'Digite o índice a ser adicionado ou selecione uma das opções:'
     else:
-        t_list = fc.func_get_tickers(user_id).split('\n')
+        t_list = fc.func_get_tickers_user(user_id).split('\n')
         reply_markup = json.dumps({'keyboard': [[x] for x in t_list], 'one_time_keyboard': True})
         text = 'Escolha o índice a ser removido ou selecione uma das opções:'
         context.bot.sendMessage(chat_id=user_id, text='Carteira:', reply_markup=reply_markup)
@@ -406,7 +431,7 @@ def track_exit(update, context):
     user_id = update.message.chat_id
     msg = update.message.text
     choice = context.user_data['choice']
-    text, success = fc.func_tickers_upd(user_id, msg, choice)
+    text, success = fc.func_tickers_upd_user(user_id, msg, choice)
     try:
         context.bot.deleteMessage(chat_id=user_id, message_id=context.user_data['msg_id'])
     except:
@@ -650,7 +675,11 @@ def end(update, context):
         update.callback_query.answer()
         update.callback_query.edit_message_text(text=text)
     else:
-        send_msg(update.effective_user.id, text, '', RKR)
+        context.bot.sendMessage(
+            chat_id=update.effective_user.id, 
+            text=text, 
+            reply_markup=RKR
+        )
     return STOP
 
 @restricted
@@ -662,7 +691,11 @@ def cancel(update, context):
         update.callback_query.answer()
         update.callback_query.edit_message_text(text=text)
     else:
-        send_msg(curr_admin_id, text, '', RKR)
+        context.bot.sendMessage(
+            chat_id=curr_admin_id, 
+            text=text, 
+            reply_markup=RKR
+        )
     return STOP
 
 # Error handler
@@ -909,6 +942,10 @@ def main():
     # log all errors
     dp.add_error_handler(error)
     updater.start_polling()
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 if __name__ == '__main__':
     init()
