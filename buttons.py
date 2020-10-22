@@ -96,12 +96,12 @@ class Buttons():
             IKB(text='Fechar', callback_data=str(self.STOP))
         ]]
         self.all_states[self.MENU_RADAR] = [[
-            IKB(text='Small Caps/Diário', callback_data=self.RADAR_SM_DAY),
-            IKB(text='Small Caps/Semanal', callback_data=self.RADAR_SM_WEEK)
+            IKB(text='Small Caps/Diário', callback_data='0'),
+            IKB(text='Small Caps/Semanal', callback_data='1')
         ], [
-            IKB(text='Mid Large Caps/Diário', callback_data=self.RADAR_ML_DAY)
+            IKB(text='Mid Large Caps/Diário', callback_data='2')
         ], [
-            IKB(text='Mid Large Caps/Semanal', callback_data=self.RADAR_ML_WEEK)
+            IKB(text='Mid Large Caps/Semanal', callback_data='3')
         ], [
             IKB(text='Ordenar resultados por...', callback_data=self.RADAR_ORDER)
         ], [

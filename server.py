@@ -351,6 +351,7 @@ def menu(update, context):
     else:
         user_id = update.message.chat_id
         query = db.get_info(user_id)
+        print(query)
         user_allowed = int(query[0][4])
         if user_allowed:
             update.message.reply_text('Olá! A qualquer momento você '
@@ -376,9 +377,16 @@ def menu_radar(update, context):
     return MENU_RADAR
 
 def radar_activate(update, context):
+    print('entrei no radar_activate')
+    user_id = update.effective_user.id
     text = 'Aguarde um momento, por favor.'
-    mode = update.callback_query.data
-    #donchian_principal
+    update.callback_query.answer()
+    update.callback_query.edit_message_text(text=text)
+    choice = update.callback_query.data
+    report = fc.func_radar(user_id, choice)
+    context.bot.sendMessage(chat_id=user_id, text=report)
+    context.user_data[START_OVER] = False
+    return EXITING
 
 def radar_order(update, context):
     context.user_data[PREV_LEVEL] = menu_radar
@@ -871,8 +879,8 @@ def main():
         }
     )
     menu_radar_handlers = [
-        CallbackQueryHandler(radar_activate, pattern='^'+RADAR_SM_DAY+'$'),
-        radar_order_conv
+        CallbackQueryHandler(radar_activate, pattern=r'^\d$'),
+        radar_order_conv,
     ]
     menu_radar_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(menu_radar, pattern='^'+MENU_RADAR+'$')],

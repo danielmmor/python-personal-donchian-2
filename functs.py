@@ -3,6 +3,7 @@ import re
 from datetime import datetime
 
 from dbhelper import DBHelper
+from radar import Radar
 
 db = DBHelper()
 
@@ -18,6 +19,7 @@ class Functions():
             'Sábado',
             'Domingo',
         ]
+
     def func_time(self, var, separator):
         if separator == '/':
             new_format = datetime.strptime(var,f'%d/%m/%Y').strftime(f'%Y-%m-%d')
@@ -281,3 +283,9 @@ class Functions():
             text = 'Pronto! Seu gerenciamento de risco já está configurado.\r\nAté mais!'
             success = True
         return text, success
+
+    def func_radar(self, user_id, choice):
+        modes = ['SD','SW','MD','MW']
+        rd = Radar()
+        report = rd.trigger(modes[int(choice)])
+        return report

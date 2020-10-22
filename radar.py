@@ -7,6 +7,7 @@ import yfinance as yf
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta, time
 from dbhelper import DBHelper
+from hidden.donchian import Donchian
 
 db = DBHelper()
 
@@ -121,3 +122,6 @@ class Radar():
             return close_all
         else:
             return history_all, close_all
+
+    def trigger(self, mode):
+        return mode
