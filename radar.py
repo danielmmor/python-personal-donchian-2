@@ -10,6 +10,7 @@ from dbhelper import DBHelper
 from hidden.donchian import Donchian
 
 db = DBHelper()
+dc = Donchian()
 
 class Radar():
     def __init__(self):

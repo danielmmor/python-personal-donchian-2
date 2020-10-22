@@ -19,6 +19,12 @@ class Functions():
             'Sábado',
             'Domingo',
         ]
+        self.reg = [
+            r'^\d*$', # user_id
+            r'^(\d\d[/]){2}\d{4}$', # date
+            r'^[1-9]+\d*$', # blocks
+            r'^\d+([,]\d+)?$', # perc, capital
+        ]
 
     def func_time(self, var, separator):
         if separator == '/':
@@ -43,16 +49,16 @@ class Functions():
 
     def func_admin(self, msg, choice):
         info = msg.split(', ')
-        # db.admin_queries(info_A, info_B, info_C, choice)
-        # 0 se autoriza: info_A = user_id, info_B = full_name, info_C = dia de hoje; 
-        # 1 se desativa: info_A = user_id, info_B = info_C = '';
-        # 2 se edita:    info_A = user_id, info_B = campo, info_C = novo dado;
-        # 3 se pesquisa: info_A = pesquisa, info_B = campo;
-        # 4 pesquisa por data: info_A = data inicial, info_B = data final
+        # db.admin_queries(info_0, info_1, info_2, choice)
+        # 0 se autoriza: info_0 = user_id, info_1 = full_name, info_2 = dia de hoje; 
+        # 1 se desativa: info_0 = user_id, info_1 = info_2 = '';
+        # 2 se edita:    info_0 = user_id, info_1 = campo, info_2 = novo dado;
+        # 3 se pesquisa: info_0 = pesquisa, info_1 = campo;
+        # 4 pesquisa por data: info_0 = data inicial, info_1 = data final
         try:
             # The query:
             if choice < 3:
-                y = re.match(r'^\d*$', info[0])
+                y = re.match(self.reg[0], info[0])
                 if not y:
                     response = 'Formato inválido! O user_id deve conter somente números. Tente novamente.'
                     return response, False
@@ -70,8 +76,9 @@ class Functions():
                     if re.match('^nome$', info[0], re.I): info[0] = info[0].replace('o', 'a')
                     if re.match('^nome$', info[1], re.I): info[1] = info[1].replace('o', 'a')
                     res = db.admin_queries(info[0], info[1], info[2], choice)
-                elif (choice == 4 and re.match(r'^(\d\d[/]){2}\d{4}$', info[0]) \
-                        and re.match(r'^(\d\d[/]){2}\d{4}$', info[1])):
+
+                elif (choice == 4 and re.match(self.reg[1], info[0]) \
+                        and re.match(self.reg[1], info[1])):
                     info[0] = self.func_time(info[0], '/')
                     info[1] = self.func_time(info[1], '/')
                     res = db.admin_queries(info[0], info[1], info[2], choice)
@@ -110,11 +117,11 @@ class Functions():
             return response, False
         
     def func_init_check(self, mode, data):
-        if mode == 'B' and not re.match(r'^[1-9]+\d*$', data):
+        if mode == 'B' and not re.match(self.reg[2], data):
             text = 'Formato inválido. Digite o valor dos bloquinhos neste formato ' \
                 '(somente números, sem aspas): "8" ou "12". Tente novamente:'
             return text, False
-        elif mode == 'P' and not re.match(r'^\d+(([,]\d+)|)$', data):
+        elif mode == 'P' and not re.match(self.reg[3], data):
             text = 'Formato inválido. Digite o valor do porcentual neste formato ' \
                 '(somente números, sem aspas): "1,5" ou "2". Tente novamente:'
             return text, False
@@ -124,7 +131,7 @@ class Functions():
                 'automático do volume a ser comprado (ex.: "1234,56", sem as aspas).'
             return text, True
         elif mode == 'p':
-            if not re.match(r'^\d+(([,]\d+)|)$', data):
+            if not re.match(self.reg[3], data):
                 text = 'Formato inválido. Digite o valor do capital neste formato (somente números, sem aspas): ' \
                     '"1234,56" ou digite "0" se não quiser responder. Tente novamente:'
                 return text, False
@@ -152,7 +159,7 @@ class Functions():
         return text
 
     def func_portf_upd(self, user_id, msg, choice):
-        if choice < 3 and re.match(r'^\d+(([,]\d+)|)$', msg):
+        if choice < 3 and re.match(self.reg[3], msg):
             if msg.rfind(','): msg = msg.replace(',', '.')
             msg = float(msg)
             port = db.get_info(user_id)[0][6]
@@ -184,7 +191,7 @@ class Functions():
         return text
 
     def func_tickers_upd_user(self, user_id, msg, choice):
-        if re.match(r'^[a-zA-Z]{4}(\d|\d\d)$', msg):
+        if re.match(r'^[a-zA-Z]{4}\d{1,2}$', msg):
             success = db.tickers_upd_user(user_id, msg, choice)
             action = ['adicionado', 'removido']
             if success:
@@ -229,14 +236,7 @@ class Functions():
                 text = 'Tente colocar a hora neste formato: "06:18", "13:45" (sem as aspas):'
                 success = False
         else:
-            if re.match(
-                    '^(Segunda-Feira|' \
-                    'Terça-Feira|' \
-                    'Quarta-Feira|' \
-                    'Quinta-Feira|' \
-                    'Sexta-Feira|' \
-                    'Sábado|' \
-                    'Domingo)$', msg):
+            if re.match('^'+'|'.join(self.days)+'$', msg):
                 data = str(self.days.index(msg))
                 db.info_upd(user_id, 'r_day', data)
                 text = 'O dia programado foi atualizado com sucesso!\r\nAté mais!'
@@ -270,11 +270,11 @@ class Functions():
         return text
     
     def func_risk_exit(self, user_id, choice, msg):
-        if choice == 'B' and not re.match(r'^[1-9]+\d*$', msg):
+        if choice == 'B' and not re.match(self.reg[2], msg):
             text = 'Formato inválido. Digite o valor dos bloquinhos neste formato ' \
                 '(somente números, sem aspas): "8" ou "12". Tente novamente:'
             success = False
-        elif choice == 'P' and not re.match(r'^\d+(([,]\d+)|)$', msg):
+        elif choice == 'P' and not re.match(self.reg[3], msg):
             text = 'Formato inválido. Digite o valor do porcentual neste formato ' \
                 '(somente números, sem aspas): "1,5" ou "2". Tente novamente:'
             success = False

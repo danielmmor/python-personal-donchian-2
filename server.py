@@ -419,7 +419,8 @@ def track_upd(update, context):
     choice = int(update.callback_query.data)
     context.user_data['choice'] = choice
     if choice == 0:
-        text = 'Digite o índice a ser adicionado ou selecione uma das opções:'
+        text = 'Digite o índice a ser adicionado ou selecione uma das opções ' \
+            '(para adicionar vários, digite os índices separados por vírgula):'
     else:
         t_list = fc.func_get_tickers_user(user_id).split('\n')
         reply_markup = json.dumps({'keyboard': [[x] for x in t_list], 'one_time_keyboard': True})
