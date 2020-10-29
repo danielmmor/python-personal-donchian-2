@@ -1,4 +1,5 @@
 import re
+import locale
 
 from datetime import datetime
 
@@ -9,6 +10,7 @@ db = DBHelper()
 
 class Functions():
     def __init__(self):
+        locale.setlocale(locale.LC_ALL, '')
         self.days = [
             'todos os dias',
             'Segunda-Feira',
@@ -24,7 +26,17 @@ class Functions():
             r'^(\d\d[/]){2}\d{4}$', # date
             r'^[1-9]+\d*$', # blocks
             r'^\d+([,]\d+)?$', # perc, capital
+            r'^([a-zA-Z]{4}\d{1,2})(, ?[a-zA-Z]{4}\d{1,2})*?$', # tickers
+            r'^([0-1]\d|2[0-3]):[0-5]\d$', # hour
         ]
+        self.modes = ['SD','SW','MD','MW']
+        self.sm_dw = {
+            self.modes[0]: 'Small Caps/Diário',
+            self.modes[1]: 'Small Caps/Semanal',
+            self.modes[2]: 'Mid Large Caps/Diário',
+            self.modes[3]: 'Mid Large Caps/Semanal',
+        }
+        self.rd = Radar()
 
     def func_time(self, var, separator):
         if separator == '/':
@@ -136,8 +148,11 @@ class Functions():
                     '"1234,56" ou digite "0" se não quiser responder. Tente novamente:'
                 return text, False
             else:
-                text = 'Tudo pronto! Você pode mudar essas configurações através do /menu. ' \
-                    'Lá você também pode obter o relatório manualmente ou saber mais informações sobre o bot.'
+                text = 'Tudo pronto!\nVocê irá receber relatórios diários conforme suas configurações ' \
+                    'às 10:30. Se escolheu a escala Semanal, receberá apenas às segundas-feiras. ' \
+                    'Você pode mudar todas essas configurações através do /menu. ' \
+                    'Lá você também pode obter o relatório manualmente ou saber mais informações ' \
+                    'sobre o bot.\nAproveite!'
                 return text, True
     
     def func_get_info(self, user_id):
@@ -181,21 +196,31 @@ class Functions():
             text = 'Formato inválido. Tente colocar o valor neste formato (somente números): "1234,56"'
             return text, False
 
-    def func_get_tickers_user(self, user_id):
+    def func_get_tickers_user(self, user_id, show_only=True):
         t_list = db.get_tickers(user_id)
         if t_list:
-            t_list = [x[0] for x in t_list]
-            text = '\n'.join(t_list)
+            if show_only:
+                text = ''
+                for m in self.modes:
+                    tickers = [x[0] for x in t_list if x[1] == m]
+                    if tickers:
+                        text += '-- ' +self.sm_dw[m]+ ' --\n' + '\n'.join(tickers) + '\n\n'
+            else:
+                text = [x[0] for x in t_list]
         else:
             text = 'A sua carteira está vazia!'
         return text
 
     def func_tickers_upd_user(self, user_id, msg, choice):
-        if re.match(r'^[a-zA-Z]{4}\d{1,2}$', msg):
-            success = db.tickers_upd_user(user_id, msg, choice)
-            action = ['adicionado', 'removido']
+        if re.match(self.reg[4], msg):
+            tickers = map(lambda x: x.upper(), re.split(r'\W+', msg))
+            success = db.tickers_upd_user(user_id, tickers, choice)
+            action = [
+                'Você adicionou o(s) ativo(s) '+msg+' com sucesso!\nAté mais!', 
+                'O ativo '+msg+' foi removido com sucesso!\nAté mais!'
+            ]
             if success:
-                text = 'O ativo '+msg+' foi '+action[choice]+' com sucesso!\nAté mais!'
+                text = action[0] if choice < 4 else action[1]
             else:
                 text = 'Não existe este ativo na sua carteira!\nAté mais!'
         else:
@@ -228,7 +253,7 @@ class Functions():
         
     def func_time_exit(self, user_id, choice, msg):
         if choice == 0:
-            if re.match('^(([0-1][0-9])|([2][0-3]))[:][0-5][0-9]$', msg):
+            if re.match(self.reg[5], msg):
                 db.info_upd(user_id, 'hour', msg)
                 text = 'A hora programada foi atualizada com sucesso!\r\nAté mais!'
                 success = True
@@ -248,17 +273,12 @@ class Functions():
 
     def func_mode_upd(self, user_id, choice):
         change = choice.split(',')
+        choice = choice.replace(',', '')
         db.info_upd(user_id, 'S_M', change[0])
         db.info_upd(user_id, 'D_W', change[1])
-        sm_dw = {
-            'S,D': 'Small Caps/Diário',
-            'M,D': 'Mid Large Caps/Diário',
-            'S,W': 'Small Caps/Semanal',
-            'M,W': 'Mid Large Caps/Semanal',
-        }
         text = 'O modo foi atualizado com sucesso! As mensagens automáticas de radar e ' \
             'monitoramento de carteira possuirão classe de ações e escala ' \
-            'equivalentes a '+sm_dw[choice]+'.\r\nAté mais!'
+            'equivalentes a '+self.sm_dw[choice]+'.\r\nAté mais!'
         return text
     
     def func_risk_upd(self, user_id, choice):
@@ -284,8 +304,52 @@ class Functions():
             success = True
         return text, success
 
-    def func_radar(self, user_id, choice):
-        modes = ['SD','SW','MD','MW']
-        rd = Radar()
-        report = rd.trigger(modes[int(choice)])
-        return report
+    def func_radar(self, choice, user_id, mode):
+        if choice == 'buy':
+            m = self.modes[int(mode)]
+            stocks = self.rd.trigger_buy(m)
+            if stocks == []:
+                text = 'No momento, nenhum ativo está perto de romper o canal superior.\r\nRelaxe!'
+            else:
+                text = '  | ------ Compra ------ | \r\n' \
+                    '| ------ '+self.sm_dw[m]+' ------ | \r\n' \
+                    'Ação | Vol | Sup | Fech | Inf\r\nDist | Trend\r\n' \
+                    '<i>!!Os ativos em atenção romperam o canal superior nos ' \
+                    'últimos 3 dias! Cuidado!!\r\n\r\n</i>'
+                for item in stocks:
+                    item[2] = locale.format('%1.2f', item[2], 1)
+                    item[3] = locale.format('%1.2f', item[3], 1)
+                    item[4] = locale.format('%1.2f', item[4], 1)
+                    item[5] = '{:.2f}'.format(item[5])
+                    item[6] = '{:.2f}'.format(item[6])
+                    text_A = f'{item[0]} | {item[1]} | ${item[2]} | ${item[3]} | ${item[4]}\r\n'
+                    text_B = f'{item[5]}% | {item[6]}'
+                    if item[7]:
+                        text += '!!'+text_A+'<i>'+text_B+'!!!!</i>\r\n\r\n'
+                    else:
+                        text += text_A+text_B+'\r\n\r\n'
+        elif choice == 'track':
+            t_list = db.get_tickers(user_id)
+            if t_list:
+                t_gen = self.rd.trigger_track(t_list)
+                text = ' | ------ Carteira ------ | \r\n' \
+                    'Ação | Fech | Inf -> Inf(novo)\r\n\r\n'
+                for group, m in t_gen:
+                    text += '---- '+self.sm_dw[m]+' ----\r\n\r\n'
+                    for item in group:
+                        if item[1]:
+                            item[1] = locale.format('%1.2f', item[1], 1)
+                            item[2] = locale.format('%1.2f', item[2], 1)
+                            text_A = f'{item[0]} | ${item[1]} | ${item[2]}'
+                            if len(item) == 4:
+                                item[3] = locale.format('%1.2f', item[3], 1)
+                                text += f'<i>!!{text_A} -> ${item[3]}!!</i>\r\n\r\n'
+                            else:
+                                text += text_A+'\r\n\r\n'
+                        else:
+                            text += f'{item[0]} | dados não encontrados - ' \
+                                'ativo incorreto ou muito novo.'
+                    text += '\r\n'
+            else:
+                text = 'A sua carteira está vazia!'
+        return text

@@ -16,8 +16,8 @@ AAAC3
 .
 
 ***TABLE +user_id+***
-ticker   +++++ S_M   +++++ D_W
-[stocks] ----- [S/M] ----- [D/W]
+ticker   +++++ S_M_D_W
+[stocks] ----- [S/M][D/W]
 
 '''
 
@@ -56,7 +56,7 @@ class DBHelper:
         user_id = self.connect(user_id)
         stmt = [
             'CREATE TABLE IF NOT EXISTS "'+user_id+'"(ticker TEXT UNIQUE, ' \
-                'S_M TEXT, D_W TEXT)',
+                'S_M_D_W TEXT)',
             'INSERT INTO users (user_id, allowed, name, username, a_day, portf, hour, r_day) ' \
             'VALUES ("'+user_id+'", 0, "'+name+'", "@'+username+'", "'+day+'", 0, "08:00", 1)',
         ]
@@ -146,25 +146,28 @@ class DBHelper:
         q = [x for x in self.conn.execute(stmt)]
         return q
 
-    def tickers_upd_user(self, user_id, ticker, choice):
+    def tickers_upd_user(self, user_id, tickers, choice):
         user_id = self.connect(user_id)
-        if choice == 0:
-            stmt = 'INSERT OR IGNORE INTO "'+user_id+'" (ticker) VALUES ("'+ticker+'")'
-        else:
-            stmt = 'DELETE FROM "'+user_id+'" WHERE ticker = ("'+ticker+'")'
-        try:
-            self.conn.execute(stmt)
-            self.conn.commit()
-            return True
-        except:
-            return False
+        modes = ['SD', 'SW', 'MD', 'MW']
+        for t in tickers:
+            if choice < 4:
+                stmt = 'INSERT OR IGNORE INTO "'+user_id+'" (ticker, S_M_D_W) ' \
+                    'VALUES ("'+t+'", "'+modes[choice]+'")'
+            else:
+                stmt = 'DELETE FROM "'+user_id+'" WHERE ticker = ("'+t+'")'
+            try:
+                self.conn.execute(stmt)
+            except:
+                return False
+        self.conn.commit()
+        return True
 
     def tickers_upd(self, table, tickers_list, date):
         self.connect()
         del_stmt = 'DELETE FROM stocks_'+table
         date_stmt = 'INSERT INTO stocks_'+table+' (ticker) VALUES ("'+date+'")'
         self.conn.execute(del_stmt)
-        self.conn.execute(date_stmt)
+        #self.conn.execute(date_stmt)
         for ticker in tickers_list:
             stmt = 'INSERT INTO stocks_'+table+' (ticker) VALUES ("'+ticker+'")'
             self.conn.execute(stmt)

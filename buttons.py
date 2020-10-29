@@ -4,63 +4,46 @@ from telegram.ext import ConversationHandler
 
 class Buttons():
     def __init__(self):
-        states_codes = [i + j for i in string.ascii_uppercase[:6] for j in string.ascii_lowercase]
-        num_states = 0
-        # Menu
-        x = 6
-        self.MENU_RADAR, self.MENU_TRACK, self.MENU_PORTF, self.MENU_INFO, \
-            self.MENU_SET, self.MENU_HELP = states_codes[:num_states + x]
-        num_states += x
-        # Radar
-        x = 5
-        self.RADAR_SM_DAY, self.RADAR_SM_WEEK, self.RADAR_ML_DAY, self.RADAR_ML_WEEK, \
-            self.RADAR_ORDER = states_codes[num_states : num_states + x]
-        num_states += x
-        # Ticker tracker
-        x = 3
-        self.TRACK_UPD, self.TRACK_EXIT, self.TRACK_WARN_REM = states_codes[num_states : num_states + x]
-        num_states += x
-        # Portfolio
-        x = 6
-        self.PORTF_ADD, self.PORTF_SUBTR, self.PORTF_SUBST, self.PORTF_CLEAR, \
-            self.PORTF_CHANGE, self.PORTF_UPD = states_codes[num_states : num_states + x]
-        num_states += x
-        # Info
-        x = 2
-        self.INFO, self.INFO_DUMMY = states_codes[num_states : num_states + x]
-        num_states += x
-        # Settings
-        x = 3
-        self.SET_TIME, self.SET_MODE, self.SET_RISK = states_codes[num_states : num_states + x]
-        num_states += x
-        # Time settings
-        x = 3
-        self.TIME_UPD, self.TIME_EXIT, self.TIME_ACT_DEACT = states_codes[num_states : num_states + x]
-        num_states += x
-        # Tracker radar mode settings
-        x = 2
-        self.MODE_UPD, self.MODE_DUMMY = states_codes[num_states : num_states + x]
-        num_states += x
-        # Risk management settings
-        x = 2
-        self.RISK_UPD, self.RISK_EXIT = states_codes[num_states : num_states + x]
-        num_states += x
-        # Help
-        x = 7
-        self.HP_HDIW, self.HP_NUMS, self.HP_BUY, self.HP_SET, \
-            self.HP_CONTACT, self.HP_SELECT, self.HP_EXIT = states_codes[num_states : num_states + x]
-        num_states += x
-        # Admin states and initial settings
-        x = 9
-        self.ADMIN_B, self.ADMIN_C, self.ADMIN_D, self.INIT_SET_A, self.INIT_SET_B, self.INIT_SET_C, \
-            self.INIT_SET_D, self.INIT_SET_E, self.INIT_SET_F = states_codes[num_states : num_states + x]
-        num_states += x
-        # Meta states
-        x = 5
-        self.MENU, self.START_OVER, self.PREV_LEVEL, self.EXITING, self.EXIT = states_codes[num_states : num_states + x]
-        num_states += x
+        s = string.ascii_uppercase
+        states_codes = [i + j for i in s[:6] for j in s]
+        (
+            # Menu
+            self.MENU_RADAR, self.MENU_TRACK, 
+            self.MENU_PORTF, self.MENU_INFO, self.MENU_SET, self.MENU_HELP,
+            # Radar
+            self.RADAR_BUY, self.RADAR_TRACK,
+            self.RADAR_A, self.RADAR_B, self.RADAR_ORDER,
+            # Ticker tracker
+            self.TRACK_UPD, self.TRACK_EXIT, self.TRACK_WARN_REM,
+            # Portfolio
+            self.PORTF_ADD, self.PORTF_SUBTR, self.PORTF_SUBST, self.PORTF_CLEAR,
+            self.PORTF_CHANGE, self.PORTF_UPD,
+            # Info
+            self.INFO, self.INFO_DUMMY,
+            # Settings
+            self.SET_TIME, self.SET_MODE, self.SET_RISK,
+            # Time settings
+            self.TIME_UPD, self.TIME_EXIT, self.TIME_ACT_DEACT,
+            # Tracker radar mode settings
+            self.MODE_UPD, self.MODE_DUMMY,
+            # Risk management settings
+            self.RISK_UPD, self.RISK_EXIT,
+            # Help
+            self.HP_HDIW, self.HP_NUMS, self.HP_BUY, self.HP_SET,
+            self.HP_CONTACT, self.HP_SELECT, self.HP_EXIT,
+            # Admin states and initial settings
+            self.ADMIN_B, self.ADMIN_C, self.ADMIN_D, self.INIT_SET_A, 
+            self.INIT_SET_B, self.INIT_SET_C, self.INIT_SET_D, self.INIT_SET_E, 
+            self.INIT_SET_F,
+            # Meta states
+            self.MENU, self.START_OVER, self.PREV_LEVEL,
+            self.EXITING, self.EXIT,
+            # remaining codes
+            *_
+        ) = states_codes
         # Shortcut to ConvHandler.END
         self.STOP = ConversationHandler.END
+        
         # Keyboard Buttons assignment
         self.all_states = {x: 0 for x in states_codes}
         self.all_states[self.ADMIN_C] = [[
@@ -84,7 +67,7 @@ class Buttons():
             IKB(text='Porcentagem relativa ao stop', callback_data='P')
         ]]
         self.all_states[self.MENU] = [[
-            IKB(text='Radar!', callback_data=self.MENU_RADAR),
+            IKB(text='Obter relatório', callback_data=self.MENU_RADAR),
         ], [
             IKB(text='Carteira', callback_data=self.MENU_TRACK),
             IKB(text='Capital', callback_data=self.MENU_PORTF),
@@ -96,6 +79,16 @@ class Buttons():
             IKB(text='Fechar', callback_data=str(self.STOP))
         ]]
         self.all_states[self.MENU_RADAR] = [[
+            IKB(text='Relatório de compra', callback_data='buy')
+        ], [
+            IKB(text='Relatório de venda (carteira)', callback_data='track')
+        #], [
+        #    IKB(text='Ordenar resultados por...', callback_data=self.RADAR_ORDER)
+        ], [
+            IKB(text='Voltar', callback_data=str(self.STOP)),
+            IKB(text='Fechar', callback_data=self.EXIT)
+        ]]
+        self.all_states[self.RADAR_BUY] = [[
             IKB(text='Small Caps/Diário', callback_data='0'),
             IKB(text='Small Caps/Semanal', callback_data='1')
         ], [
@@ -103,9 +96,6 @@ class Buttons():
         ], [
             IKB(text='Mid Large Caps/Semanal', callback_data='3')
         ], [
-            IKB(text='Ordenar resultados por...', callback_data=self.RADAR_ORDER)
-        ], [
-            IKB(text='Voltar', callback_data=str(self.STOP)),
             IKB(text='Fechar', callback_data=self.EXIT)
         ]]
         self.all_states[self.RADAR_ORDER] = [[
@@ -121,12 +111,18 @@ class Buttons():
         ], [
             IKB(text='"Trendabilidade" (Trend)', callback_data='6')
         ], [
-            IKB(text='Voltar', callback_data=str(self.STOP)),
             IKB(text='Fechar', callback_data=self.EXIT)
         ]]
         self.all_states[self.MENU_TRACK] = [[
-            IKB(text='Adicionar ativo', callback_data='0'),
-            IKB(text='Remover ativo', callback_data='1')
+            IKB(text='Adicionar ativo Small Cap/Diário', callback_data='0'),
+        ], [
+            IKB(text='Adicionar ativo Small Cap/Semanal', callback_data='1'),
+        ], [
+            IKB(text='Adicionar ativo Mid-Large/Diário', callback_data='2'),
+        ], [
+            IKB(text='Adicionar ativo Mid-Large/Semanal', callback_data='3'),
+        ], [
+            IKB(text='Remover ativo', callback_data='4')
         #], [
         #    IKB(text='Desativar último(s) alerta(s)', callback_data=self.TRACK_WARN_REM)
         ], [

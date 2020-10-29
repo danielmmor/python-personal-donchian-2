@@ -16,6 +16,7 @@ class Radar():
     def __init__(self):
         tables = ['S', 'M']
         for table in tables:
+            #self.gather_tickers(table)
             schedule.every().monday.at('14:30').do(self.gather_tickers, table=table)
             schedule.every().tuesday.at('14:30').do(self.gather_tickers, table=table)
             schedule.every().wednesday.at('14:30').do(self.gather_tickers, table=table)
@@ -31,6 +32,7 @@ class Radar():
             return pickle.load(f)
 
     def gather_tickers(self, table):
+        print('Gathering tickers for table '+table+'...')
         tables = {
             'S': 'SMLL',
             'SN': 'SMLL',
@@ -51,8 +53,14 @@ class Radar():
             tm.sleep(2)
         today = str(datetime.now().date())
         db.tickers_upd(table, t_list, today)
+        print(t_list)
+        print('Tickers saved.')
 
     def gather_eod(self, s_m, d_w, choice, t_list=''):
+        print('Gathering EOD data for mode '+s_m+d_w+'...')
+        # choice 0 - up, close, down
+        # choice 1 - close only
+        # choice 2 - down only
         mode = s_m + d_w
         if choice == 0:
             modes = {
@@ -62,13 +70,13 @@ class Radar():
             days, interval = modes[mode]
             t_list = db.get_tickers('stocks_'+s_m)
             t_list = [x[0] for x in t_list]
-            t_list = t_list[1:]
+            #t_list = t_list[1:]
         elif choice == 1:
             days = 4
             interval = '1d' if d_w == 'D' else '1wk'
             t_list = db.get_tickers('stocks_'+s_m)
             t_list = [x[0] for x in t_list]
-            t_list = t_list[1:]
+            #t_list = t_list[1:]
         elif choice == 2:
             modes = {
                 'SD': [90, '1d'], 'MD': [130, '1d'],
@@ -90,39 +98,64 @@ class Radar():
                 temp_sa.append(t_list_sa[i-1])
                 i += 1
             temp_sa_y = ' '.join(temp_sa)
-            try:
-                data = yf.download(temp_sa_y, interval=interval, 
-                                   auto_adjust=True, start=before, end=now)
-                for t, t_sa in zip(temp, temp_sa):
-                    if len(temp) == 1:
-                        d_high, d_low, d_close = data['High'], data['Low'], data['Close']
-                    else:
-                        d_high, d_low, d_close = data[('High', t_sa)], data[('Low', t_sa)], data[('Close', t_sa)]
-                    if choice == 0:
-                        high = [float('%.2f' % d_high[x]) for x in d_high]
-                        low = [float('%.2f' % d_low[x]) for x in d_low]
-                        avg = [(x+y)/2 for x, y in zip(*[high, low])]
-                        history_all[t] = [high, low, avg]
-                    if choice == 2:
-                        low = [float('%.2f' % d_low[x]) for x in d_low]
-                        history_all[t] = low
-                    closing = float('%.2f' % d_close[-1])
-                    if closing == 0 or np.isnan(closing):
-                        close_all[t] = float('%.2f' % d_close[-2])
-                    else:
-                        close_all[t] = closing
-                k += 1
+            #try:
+            dataY = yf.download(temp_sa_y, interval=interval, 
+                                auto_adjust=True, start=before, end=now)
+            data = dataY.to_dict()
+            for t, t_sa in zip(temp, temp_sa):
+                if len(temp) == 1:
+                    d_high, d_low, d_close = data['High'], data['Low'], dataY['Close']
+                else:
+                    d_high, d_low, d_close = data[('High', t_sa)], data[('Low', t_sa)], dataY[('Close', t_sa)]
+                if choice == 0:
+                    high = [float('%.2f' % d_high[x]) for x in d_high]
+                    low = [float('%.2f' % d_low[x]) for x in d_low]
+                    avg = [(x+y)/2 for x, y in zip(*[high, low])]
+                    history_all[t] = [high, low, avg]
+                elif choice == 2:
+                    low = [float('%.2f' % d_low[x]) for x in d_low]
+                    history_all[t] = low
+                closing = float('%.2f' % d_close[-1])
+                if closing == 0 or np.isnan(closing):
+                    close_all[t] = float('%.2f' % d_close[-2])
+                else:
+                    close_all[t] = closing
+            k += 1
+            '''
             except Exception as e:
                 print(e)
                 i = m
                 tm.sleep(2)
+            '''
+        print('EOD gathered.')
         if choice == 0:
             self.save_obj(history_all, mode)
             self.save_obj(close_all, mode + '_close')
+            print('EOD saved.')
+        else:
+            pass
         if choice == 1:
             return close_all
         else:
             return history_all, close_all
 
-    def trigger(self, mode):
-        return mode
+    def trigger_buy(self, mode):
+        sameday = False
+        history_all, close_all = self.gather_eod(mode[0], mode[1], 0)
+        t_list = db.get_tickers('stocks_'+mode[0])
+        t_list = [x[0] for x in t_list]
+        portf = '0'
+        result = dc.donchian_buy(mode, t_list, history_all, close_all, portf, sameday)
+        return result
+
+    def trigger_track(self, t_list):
+        sameday = False
+        modes = ['SD','SW','MD','MW']
+        for m in modes:
+            t_temp = [x[0] for x in t_list if x[1] == m]
+            if t_temp:
+                history_temp, close_temp = self.gather_eod(m[0], m[1], 2, t_temp)
+                result = dc.donchian_track(m, t_temp, history_temp, close_temp, sameday)
+                yield result, m
+            else:
+                pass
