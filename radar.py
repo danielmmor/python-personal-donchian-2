@@ -5,7 +5,7 @@ import time as tm
 import numpy as np
 import yfinance as yf
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta, time
+from datetime import datetime as dtt, timedelta, time
 from dbhelper import DBHelper
 from hidden.donchian import Donchian
 
@@ -14,14 +14,33 @@ dc = Donchian()
 
 class Radar():
     def __init__(self):
+        print('Initializing radar - gather & schedule tickers and EOD')
         tables = ['S', 'M']
+        scales = ['D', 'W']
+        ticker_hour = self.hour_fix('17:45')
+        eod_hour = self.hour_fix('21:00')
         for table in tables:
             #self.gather_tickers(table)
-            schedule.every().monday.at('14:30').do(self.gather_tickers, table=table)
-            schedule.every().tuesday.at('14:30').do(self.gather_tickers, table=table)
-            schedule.every().wednesday.at('14:30').do(self.gather_tickers, table=table)
-            schedule.every().thursday.at('14:30').do(self.gather_tickers, table=table)
-            schedule.every().friday.at('14:30').do(self.gather_tickers, table=table)
+            self.weekly(ticker_hour, self.gather_tickers, 'tickers', table=table)
+            for scale in scales:
+                #self.gather_eod(table, scale, 0)
+                self.weekly(eod_hour, self.gather_eod, 'eod', s_m=table, d_w=scale, choice=0)
+        print('Radar ready.')
+
+    def hour_fix(self, hour):
+        offset = 0
+        hour = dtt.strptime(hour, '%H:%M')
+        hour += timedelta(hours=offset)
+        hour = hour.strftime('%H:%M')
+        return hour
+        
+    def weekly(self, hour, func, tag, **kwargs):
+            schedule.every().monday.at(hour).do(func, **kwargs).tag(tag)
+            schedule.every().tuesday.at(hour).do(func, **kwargs).tag(tag)
+            schedule.every().wednesday.at(hour).do(func, **kwargs).tag(tag)
+            schedule.every().thursday.at(hour).do(func, **kwargs).tag(tag)
+            schedule.every().friday.at(hour).do(func, **kwargs).tag(tag)
+            schedule.every().saturday.at(hour).do(func, **kwargs).tag(tag)
 
     def save_obj(self, obj, name):
         with open('obj/' + name + '.pkl', 'wb+') as f:
@@ -30,6 +49,13 @@ class Radar():
     def load_obj(self, name):
         with open('obj/' + name + '.pkl', 'rb') as f:
             return pickle.load(f)
+
+    def sameday(self):
+        if (dtt.now().time() <= time(10,20) \
+                or dtt.now().time() > time(18,0)):
+            return True
+        else:
+            return False
 
     def gather_tickers(self, table):
         print('Gathering tickers for table '+table+'...')
@@ -51,9 +77,8 @@ class Radar():
                 t_list.append(t_text[1])
             trials += 1
             tm.sleep(2)
-        today = str(datetime.now().date())
+        today = str(dtt.now().date())
         db.tickers_upd(table, t_list, today)
-        print(t_list)
         print('Tickers saved.')
 
     def gather_eod(self, s_m, d_w, choice, t_list=''):
@@ -63,28 +88,31 @@ class Radar():
         # choice 2 - down only
         mode = s_m + d_w
         if choice == 0:
+            print('EOD: high, low, close')
             modes = {
                 'SD': [240, '1d'], 'MD': [360, '1d'],
                 'SW': [260, '1wk'], 'MW': [380, '1wk']
             }
             days, interval = modes[mode]
-            t_list = db.get_tickers('stocks_'+s_m)
+            t_list = db.get_everything('stocks_'+s_m)
             t_list = [x[0] for x in t_list]
             #t_list = t_list[1:]
         elif choice == 1:
+            print('EOD: close')
             days = 4
             interval = '1d' if d_w == 'D' else '1wk'
-            t_list = db.get_tickers('stocks_'+s_m)
+            t_list = db.get_everything('stocks_'+s_m)
             t_list = [x[0] for x in t_list]
             #t_list = t_list[1:]
         elif choice == 2:
+            print('EOD: down, close')
             modes = {
                 'SD': [90, '1d'], 'MD': [130, '1d'],
                 'SW': [260, '1wk'], 'MW': [380, '1wk']
             }
             days, interval = modes[mode]
-        now = str(datetime.now().date()+timedelta(days=2))
-        before = str(datetime.now().date()-timedelta(days=days))
+        now = str(dtt.now().date()+timedelta(days=2))
+        before = str(dtt.now().date()-timedelta(days=days))
         t_list_sa = [x + '.SA' for x in t_list]
         history_all, close_all = {}, {}
         i, k, jump = 1, 1, 25
@@ -98,35 +126,34 @@ class Radar():
                 temp_sa.append(t_list_sa[i-1])
                 i += 1
             temp_sa_y = ' '.join(temp_sa)
-            #try:
-            dataY = yf.download(temp_sa_y, interval=interval, 
-                                auto_adjust=True, start=before, end=now)
-            data = dataY.to_dict()
-            for t, t_sa in zip(temp, temp_sa):
-                if len(temp) == 1:
-                    d_high, d_low, d_close = data['High'], data['Low'], dataY['Close']
-                else:
-                    d_high, d_low, d_close = data[('High', t_sa)], data[('Low', t_sa)], dataY[('Close', t_sa)]
-                if choice == 0:
-                    high = [float('%.2f' % d_high[x]) for x in d_high]
-                    low = [float('%.2f' % d_low[x]) for x in d_low]
-                    avg = [(x+y)/2 for x, y in zip(*[high, low])]
-                    history_all[t] = [high, low, avg]
-                elif choice == 2:
-                    low = [float('%.2f' % d_low[x]) for x in d_low]
-                    history_all[t] = low
-                closing = float('%.2f' % d_close[-1])
-                if closing == 0 or np.isnan(closing):
-                    close_all[t] = float('%.2f' % d_close[-2])
-                else:
-                    close_all[t] = closing
-            k += 1
-            '''
+            try:
+                dataY = yf.download(temp_sa_y, interval=interval, 
+                                    auto_adjust=True, start=before, end=now)
+                data = dataY.to_dict()
+                for t, t_sa in zip(temp, temp_sa):
+                    if len(temp) == 1:
+                        d_high, d_low, d_close = data['High'], data['Low'], dataY['Close']
+                    else:
+                        d_high, d_low, d_close = data[('High', t_sa)], data[('Low', t_sa)], dataY[('Close', t_sa)]
+                    if choice == 0:
+                        high = [float('%.2f' % d_high[x]) for x in d_high]
+                        low = [float('%.2f' % d_low[x]) for x in d_low]
+                        avg = [(x+y)/2 for x, y in zip(*[high, low])]
+                        history_all[t] = [high, low, avg]
+                    elif choice == 2:
+                        low = [float('%.2f' % d_low[x]) for x in d_low]
+                        history_all[t] = low
+                    closing = float('%.2f' % d_close[-1])
+                    if closing == 0 or np.isnan(closing):
+                        close_all[t] = float('%.2f' % d_close[-2])
+                    else:
+                        close_all[t] = closing
+                k += 1
             except Exception as e:
+                print('Error gathering EOD:')
                 print(e)
                 i = m
                 tm.sleep(2)
-            '''
         print('EOD gathered.')
         if choice == 0:
             self.save_obj(history_all, mode)
@@ -140,16 +167,25 @@ class Radar():
             return history_all, close_all
 
     def trigger_buy(self, mode):
-        sameday = False
-        history_all, close_all = self.gather_eod(mode[0], mode[1], 0)
-        t_list = db.get_tickers('stocks_'+mode[0])
+        sameday = self.sameday()
+        history_all = self.load_obj(mode)
+        mkt_open = self.hour_fix('10:00')
+        mkt_close = self.hour_fix('18:00')
+        if dtt.now().time() < dtt.strptime(mkt_open, '%H:%M').time() \
+                or dtt.now().time() > dtt.strptime(mkt_close, '%H:%M').time():
+            close_all = self.load_obj(mode + '_close')
+        else:
+            close_all = self.gather_eod(mode[0], mode[1], 1)
+        t_list = db.get_everything('stocks_'+mode[0])
         t_list = [x[0] for x in t_list]
+        # pegar portf do user_id
+        # pegar gerenciamento de risco do user_id
         portf = '0'
         result = dc.donchian_buy(mode, t_list, history_all, close_all, portf, sameday)
         return result
 
     def trigger_track(self, t_list):
-        sameday = False
+        sameday = self.sameday()
         modes = ['SD','SW','MD','MW']
         for m in modes:
             t_temp = [x[0] for x in t_list if x[1] == m]

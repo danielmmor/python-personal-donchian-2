@@ -1,7 +1,8 @@
 '''
 ***TABLE users***
 user_id +++++ name +++++ username +++++ email +++++ allowed +++++ allowed_day +++++ \
-    portf +++++ small/midlarge +++++ daily/week +++++ hour +++++ radar_day +++++ blocks/perc +++++ 8/1%
+    portf +++++ small/midlarge +++++ daily/week +++++ hour +++++ radar_day +++++ \
+    blocks/perc +++++ 8/1% +++++ order
 
 (radar_day: segunda 1, terça 2...)
 
@@ -30,12 +31,13 @@ class DBHelper:
         if user_id: return str(user_id)
 
     def setup(self):
+        print('Initializing database...')
         self.connect()
         stmt = [
             'CREATE TABLE IF NOT EXISTS users' \
                 '(user_id TEXT UNIQUE, name TEXT, username TEXT, email TEXT, ' \
                 'allowed TEXT, a_day DATE, portf TEXT, S_M TEXT, D_W TEXT, ' \
-                'hour TEXT, r_day TEXT, B_P TEXT, B_P_set TEXT)',
+                'hour TEXT, r_day TEXT, B_P TEXT, B_P_set TEXT, sorting TEXT)',
             'CREATE INDEX IF NOT EXISTS idIndex ON users(user_id ASC)',
             'CREATE INDEX IF NOT EXISTS nameIndex ON users(name ASC)',
             'CREATE INDEX IF NOT EXISTS usuarioIndex ON users(username ASC)',
@@ -51,6 +53,7 @@ class DBHelper:
         for s in stmt:
             self.conn.execute(s)
         self.conn.commit()
+        print('Database ready.')
 
     def user_start(self, user_id, name, username, day):
         user_id = self.connect(user_id)
@@ -58,18 +61,18 @@ class DBHelper:
             'CREATE TABLE IF NOT EXISTS "'+user_id+'"(ticker TEXT UNIQUE, ' \
                 'S_M_D_W TEXT)',
             'INSERT INTO users (user_id, allowed, name, username, a_day, portf, hour, r_day) ' \
-            'VALUES ("'+user_id+'", 0, "'+name+'", "@'+username+'", "'+day+'", 0, "08:00", 1)',
+            'VALUES ("'+user_id+'", 0, "'+name+'", "@'+username+'", "'+day+'", 0, "10:30", 1)',
         ]
         for s in stmt:
             self.conn.execute(s)
         self.conn.commit()
 
-    def admin_queries(self, info_A, info_B, info_C, choice):
+    def admin_queries(self, info_A, info_B='', info_C='', choice=''):
         # 0 se autoriza: info_A = user_id, info_B = full_name, info_C = dia de hoje; 
         # 1 se desativa: info_A = user_id, info_B = info_C = '';
         # 2 se edita:    info_A = user_id, info_B = campo, info_C = novo dado;
-        # 3 se pesquisa: info_A = pesquisa, info_B = campo
-        # 4 pesquisa por data: info_A = data inicial, info_B = data final
+        # 3 se pesquisa: info_A = campo, info_B = pesquisa, info_C = '';
+        # 4 pesquisa por data: info_A = data inicial, info_B = data final, info_C = '';
         if choice < 3:
             user_id = self.connect(info_A)
             exists = self.get_info(info_A)
@@ -103,8 +106,6 @@ class DBHelper:
             q = [x for x in self.conn.execute(stmt)]
             q.sort(key=lambda tup: tup[5])
             r = [list(t) for t in q]
-            for item in r:
-                item[0] = item[0].replace('a', '')
             return r
     
     def user_init(self, user_id, all_data):
@@ -129,6 +130,7 @@ class DBHelper:
         # 10: r_day - 0~7
         # 11: B_P - B/P
         # 12: B_P_set - 8/1%
+        # 13: order - 0~?
         user_id = self.connect(user_id)
         stmt = 'SELECT * FROM users WHERE user_id = ("'+user_id+'")'
         q = [x for x in self.conn.execute(stmt)]
@@ -140,7 +142,7 @@ class DBHelper:
         self.conn.execute(stmt)
         self.conn.commit()
 
-    def get_tickers(self, table):
+    def get_everything(self, table):
         table = self.connect(table)
         stmt = 'SELECT * FROM "'+table+'"'
         q = [x for x in self.conn.execute(stmt)]
@@ -165,7 +167,7 @@ class DBHelper:
     def tickers_upd(self, table, tickers_list, date):
         self.connect()
         del_stmt = 'DELETE FROM stocks_'+table
-        date_stmt = 'INSERT INTO stocks_'+table+' (ticker) VALUES ("'+date+'")'
+        #date_stmt = 'INSERT INTO stocks_'+table+' (ticker) VALUES ("'+date+'")'
         self.conn.execute(del_stmt)
         #self.conn.execute(date_stmt)
         for ticker in tickers_list:

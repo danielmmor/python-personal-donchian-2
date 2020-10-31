@@ -74,7 +74,7 @@ class Buttons():
         ], [
             IKB(text='Meu status', callback_data=self.MENU_INFO),
             IKB(text='Configurações', callback_data=self.MENU_SET),
-            IKB(text='Ajuda', callback_data=self.MENU_HELP)
+            #IKB(text='Ajuda', callback_data=self.MENU_HELP)
         ], [
             IKB(text='Fechar', callback_data=str(self.STOP))
         ]]
@@ -151,8 +151,8 @@ class Buttons():
         ]]
         self.all_states[self.SET_TIME] = [[
             IKB(text='Mudar a hora dos alertas automáticos', callback_data='0')
-        ], [
-            IKB(text='Mudar o dia dos alertas automáticos', callback_data='1')
+        #], [
+        #    IKB(text='Mudar o dia dos alertas automáticos', callback_data='1')
         ], [
             IKB(text='Voltar', callback_data=str(self.STOP)),
             IKB(text='Fechar', callback_data=self.EXIT)
