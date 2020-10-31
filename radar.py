@@ -20,10 +20,10 @@ class Radar():
         ticker_hour = self.hour_fix('17:45')
         eod_hour = self.hour_fix('21:00')
         for table in tables:
-            #self.gather_tickers(table)
+            self.gather_tickers(table)
             self.weekly(ticker_hour, self.gather_tickers, 'tickers', table=table)
             for scale in scales:
-                #self.gather_eod(table, scale, 0)
+                self.gather_eod(table, scale, 0)
                 self.weekly(eod_hour, self.gather_eod, 'eod', s_m=table, d_w=scale, choice=0)
         print('Radar ready.')
 
@@ -40,7 +40,6 @@ class Radar():
             schedule.every().wednesday.at(hour).do(func, **kwargs).tag(tag)
             schedule.every().thursday.at(hour).do(func, **kwargs).tag(tag)
             schedule.every().friday.at(hour).do(func, **kwargs).tag(tag)
-            schedule.every().saturday.at(hour).do(func, **kwargs).tag(tag)
 
     def save_obj(self, obj, name):
         with open('obj/' + name + '.pkl', 'wb+') as f:

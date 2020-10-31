@@ -18,6 +18,7 @@ import string
 import schedule
 import time
 import sys, traceback
+import requests
 from functools import wraps
 from telegram import (InlineKeyboardMarkup as IKM, InlineKeyboardButton as IKB)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
@@ -976,4 +977,6 @@ if __name__ == '__main__':
         exc_type, exc_value, exc_traceback = sys.exc_info()
         ex_text = 'Deu ruim:\n' + ''.join(traceback.format_exception(exc_type, 
                                           exc_value, exc_traceback))
-        fc.func_send_msg(chat_id='545699841', text=ex_text)
+        url = 'https://api.telegram.org/bot{}/sendMessage?' \
+            'chat_id={}&text={}&parse_mode=HTML'
+        requests.get(url.format(TOKEN, '545699841', ex_text))
