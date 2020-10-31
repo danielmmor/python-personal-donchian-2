@@ -73,7 +73,8 @@ class DBHelper:
         # 2 se edita:    info_A = user_id, info_B = campo, info_C = novo dado;
         # 3 se pesquisa: info_A = campo, info_B = pesquisa, info_C = '';
         # 4 pesquisa por data: info_A = data inicial, info_B = data final, info_C = '';
-        if choice < 3:
+        # 5 se reseta:   info_A = user_id
+        if choice < 3 or choice == 5:
             user_id = self.connect(info_A)
             exists = self.get_info(info_A)
             if exists:
@@ -92,6 +93,10 @@ class DBHelper:
                     stmt = 'UPDATE users SET allowed = (0) WHERE user_id = ("'+user_id+'")'
                 elif choice == 2:
                     stmt = 'UPDATE users SET '+info_B+' = ("'+info_C+'") WHERE user_id = ("'+user_id+'")'
+                elif choice == 5:
+                    stmt = 'DROP TABLE "'+user_id+'"'
+                    self.conn.execute(stmt)
+                    stmt = 'DELETE FROM users WHERE user_id = ("'+user_id+'")'
                 self.conn.execute(stmt)
                 self.conn.commit()
                 return 2

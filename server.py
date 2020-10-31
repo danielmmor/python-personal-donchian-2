@@ -11,12 +11,13 @@ set_mode = constructor('alo', 123)
 A, B = set_mode(4)
 print(A, B)
 '''
-import logging
+#import logging
 import json
 import configparser as cfg
 import string
 import schedule
 import time
+import sys, traceback
 from functools import wraps
 from telegram import (InlineKeyboardMarkup as IKM, InlineKeyboardButton as IKB)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
@@ -92,7 +93,8 @@ def init():
         'Desativar usuário', 
         'Editar usuário', 
         'Pesquisar usuário', 
-        'Pesquisar por data'
+        'Pesquisar por data',
+        'Resetar usuário'
     ]
     INIT = False
 
@@ -154,26 +156,26 @@ def admin_a(upd, context):
     return ADMIN_B
 
 def admin_b(upd, context):
+    print('entrei no admin_b')
     global curr_admin_id, ADMIN_OPTS
     msg_id = upd.message.message_id
     msg = upd.message.text
     if msg in ADMIN_OPTS:
         choice = ADMIN_OPTS.index(msg)
         context.user_data['selection'] = choice
-        if choice == 0:
-            admin_text = f'{ADMIN_OPTS[choice]} - digite o user_id e o nome completo, separado por vírgulas ' \
-                '(se não quiser inserir o nome completo, digite "0") ou clique em /cancelar:'
-        elif choice == 1:
-            admin_text = f'{ADMIN_OPTS[choice]} - digite o user_id:'
-        elif choice == 2:
-            admin_text = f'{ADMIN_OPTS[choice]} - digite o user_id, o campo a editar (nome | username | email) ' \
-                'e o novo dado, separados por vírgulas (exemplo "123456, username, @Usuario") ou clique em /cancelar:'
-        elif choice == 3:
-            admin_text = f'{ADMIN_OPTS[choice]} - digite o campo de pesquisa (user_id | nome | username) ' \
-                'e a pesquisa, separados por vírgula (exemplo "username, @Usuario") ou clique em /cancelar:'
-        elif choice == 4:
-            admin_text = f'{ADMIN_OPTS[choice]} - digite as datas inicial e final, separadas por vírgulas ' \
-                '(exemplo "15/02/2020, 26/02/2020") ou clique em /cancelar:'
+        admin_texts = [
+            ' - digite o user_id e o nome completo, separado por vírgulas ' \
+                '(se não quiser inserir o nome completo, digite "0") ou clique em /cancelar:',
+            ' - digite o user_id:',
+            ' - digite o user_id, o campo a editar (nome | username | email) ' \
+                'e o novo dado, separados por vírgulas (exemplo "123456, username, @Usuario") ou clique em /cancelar:',
+            ' - digite o campo de pesquisa (user_id | nome | username) ' \
+                'e a pesquisa, separados por vírgula (exemplo "username, @Usuario") ou clique em /cancelar:',
+            ' - digite as datas inicial e final, separadas por vírgulas ' \
+                '(exemplo "15/02/2020, 26/02/2020") ou clique em /cancelar:',
+            ' - digite o user_id a resetar:'
+        ]
+        admin_text = msg + admin_texts[choice]
         fc.func_send_msg(
             chat_id=curr_admin_id, 
             text=admin_text, 
@@ -337,18 +339,21 @@ def menu(upd, context):
         return MENU
     else:
         user_id = upd.message.chat_id
-        query = db.get_info(user_id)
-        print(query)
-        user_allowed = int(query[0][4])
-        if user_allowed:
-            upd.message.reply_text('Olá! Se precisar de ajuda, '
-                'contate o @DanMoreira.')
-            upd.message.reply_text(text=text, reply_markup=IKM(buttons))
-            context.user_data[START_OVER] = True
-            return MENU
-        else:
-            text = 'Você ainda não está autorizado. Fale com o administrador!'
-            upd.message.reply_text(text=text)
+        try:
+            query = db.get_info(user_id)
+            print(query)
+            user_allowed = int(query[0][4])
+            if user_allowed:
+                upd.message.reply_text('Olá! Se precisar de ajuda, '
+                    'contate o @DanMoreira.')
+                upd.message.reply_text(text=text, reply_markup=IKM(buttons))
+                context.user_data[START_OVER] = True
+                return MENU
+            else:
+                text = 'Você ainda não está autorizado. Fale com o administrador!'
+                upd.message.reply_text(text=text)
+        except:
+            pass
 
 # Radar
 def menu_radar(upd, context):
@@ -931,7 +936,8 @@ def main():
                                                    +ADMIN_OPTS[1]+'|' \
                                                    +ADMIN_OPTS[2]+'|' \
                                                    +ADMIN_OPTS[3]+'|' \
-                                                   +ADMIN_OPTS[4]+')$'), admin_b)],
+                                                   +ADMIN_OPTS[4]+'|' \
+                                                   +ADMIN_OPTS[5]+')$'), admin_b)],
             ADMIN_C: [MessageHandler(~Filters.command, admin_c)],
             ADMIN_D: [CallbackQueryHandler(admin_d, pattern='^'+ADMIN_D+'$')]
         },
@@ -957,19 +963,17 @@ def main():
         time.sleep(1)
 
 if __name__ == '__main__':
+    '''
     print('Initializing bot...')
     init()
     main()
     '''
-    while True:
-        try:
-            print('Initializing bot...')
-            init()
-            main()
-        except Exception as e:
-            ex_text = 'Deu ruim:\n'+ str(e)
-            fc.func_send_msg(chat_id='545699841', text=ex_text)
-            print('\r\n\r\nBot Error:\r\n\r\n')
-            print(ex_text)
-            print('\r\n\r\nRestarting...\r\n\r\n')
-    '''
+    try:
+        print('Initializing bot...')
+        init()
+        main()
+    except:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        ex_text = 'Deu ruim:\n' + ''.join(traceback.format_exception(exc_type, 
+                                          exc_value, exc_traceback))
+        fc.func_send_msg(chat_id='545699841', text=ex_text)

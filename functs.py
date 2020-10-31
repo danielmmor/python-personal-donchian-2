@@ -61,7 +61,6 @@ class Functions():
                     self.rd.weekly(hour, self.func_radar_auto, str(item[0]), **kwargs)
         else:
             pass
-        for j in schedule.jobs: print(j)
         print('Reports scheduled.')
 
     def func_time(self, var, separator):
@@ -93,6 +92,7 @@ class Functions():
         # 2 se edita:    info_0 = user_id, info_1 = campo, info_2 = novo dado;
         # 3 se pesquisa: info_0 = campo, info_1 = pesquisa;
         # 4 pesquisa por data: info_0 = data inicial, info_1 = data final
+        # 5 se reseta:   info_0 = user_id
         try:
             # The query:
             if choice < 3:
@@ -104,9 +104,9 @@ class Functions():
                 date = str(dtt.now().date())
                 res = db.admin_queries(info[0], info[1], date, choice)
                 action = 'autorizado'
-            elif choice == 1:
+            elif choice in {1, 5}:
                 res = db.admin_queries(info[0], choice=choice)
-                action = 'desativado'
+                action = 'desativado' if choice == 1 else 'resetado'
             elif choice in {2, 3, 4}:
                 if ((choice == 2 and re.match('^(nome|username|email)$', info[1], re.I)) \
                         or (choice == 3 and re.match('^(user_id|nome|username)$', info[0], re.I))):
@@ -126,7 +126,7 @@ class Functions():
             elif not res:
                 response = 'Nada foi encontrado para essa pesquisa! Tente novamente ou clique em /cancelar.'
                 return response, False
-            elif choice in {0, 1}:
+            elif choice in {0, 1, 5}:
                 if res == 1:
                     response = f'Este usuário já está {action}!'
                 else:
@@ -292,7 +292,6 @@ class Functions():
             if re.match(self.reg[5], msg):
                 user = db.admin_queries('user_id', str(user_id), choice=3)
                 hour = self.rd.hour_fix(msg)
-                print(user)
                 kwargs = {
                     'user_id': user_id,
                     's_m': user[0][7],
@@ -303,7 +302,6 @@ class Functions():
                 db.info_upd(user_id, 'hour', msg)
                 text = 'A hora programada foi atualizada com sucesso!\r\nAté mais!'
                 success = True
-                for j in schedule.jobs: print(j)
             else:
                 text = 'Tente colocar a hora neste formato: "06:18", "13:45" (sem as aspas):'
                 success = False
