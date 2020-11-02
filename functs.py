@@ -27,7 +27,7 @@ class Functions():
             r'^(\d\d[/]){2}\d{4}$', # date
             r'^[1-9]+\d*$', # blocks
             r'^\d+([,]\d+)?$', # perc, capital
-            r'^([a-zA-Z]{4}\d{1,2})(, ?[a-zA-Z]{4}\d{1,2})*?$', # tickers
+            r'^([a-zA-Z]{4}\d{1,2}|B3SA3)(, ?([a-zA-Z]{4}\d{1,2}|B3SA3))*?$', # tickers
             r'^([0-1]\d|2[0-3]):[0-5]\d$', # hour
         ]
         self.modes = ['SD','SW','MD','MW']
@@ -229,7 +229,8 @@ class Functions():
             text = 'Pronto! O capital foi zerado.\n\rAté mais!'
             return text
         else:
-            text = 'Formato inválido. Tente colocar o valor neste formato (somente números): "1234,56"'
+            text = 'Formato inválido. Tente colocar o valor neste formato ' \
+                '(somente números): "1234,56" ou clique em /fechar:'
             return text, False
 
     def func_get_tickers_user(self, user_id, show_only=True):
@@ -244,7 +245,7 @@ class Functions():
             else:
                 text = [x[0] for x in t_list]
         else:
-            text = 'A sua carteira está vazia! Acesse /menu > Carteira para adicionar ativos.'
+            text = 'A sua carteira está vazia!'
         return text
 
     def func_tickers_upd_user(self, user_id, msg, choice):
@@ -252,7 +253,7 @@ class Functions():
             tickers = map(lambda x: x.upper(), re.split(r'\W+', msg))
             success = db.tickers_upd_user(user_id, tickers, choice)
             action = [
-                'Você adicionou o(s) ativo(s) '+', '.join(tickers)+' com sucesso!\nAté mais!', 
+                'Você adicionou o(s) ativo(s) '+msg+' com sucesso!\nAté mais!', 
                 'O ativo '+msg+' foi removido com sucesso!\nAté mais!'
             ]
             if success:
@@ -261,7 +262,8 @@ class Functions():
                 text = 'Não existe este ativo na sua carteira!\nAté mais!'
         else:
             success = False
-            text ='Tente colocar o índice neste formato: "PETR4" (sem as aspas):'
+            text ='Tente colocar o índice neste formato: "PETR4" ' \
+                '(sem as aspas) ou clique em /fechar:'
         return text, success
 
     def func_time_upd(self, user_id, choice):
@@ -303,7 +305,8 @@ class Functions():
                 text = 'A hora programada foi atualizada com sucesso!\r\nAté mais!'
                 success = True
             else:
-                text = 'Tente colocar a hora neste formato: "06:18", "13:45" (sem as aspas):'
+                text = 'Tente colocar a hora neste formato: "06:18", "13:45" ' \
+                    '(sem as aspas) ou clique em /fechar::'
                 success = False
         else:
             if re.match('^'+'|'.join(self.days)+'$', msg):
@@ -337,11 +340,11 @@ class Functions():
     def func_risk_exit(self, user_id, choice, msg):
         if choice == 'B' and not re.match(self.reg[2], msg):
             text = 'Formato inválido. Digite o valor dos bloquinhos neste formato ' \
-                '(somente números, sem aspas): "8" ou "12". Tente novamente:'
+                '(somente números, sem aspas): "8" ou "12". Tente novamente ou clique em /fechar:'
             success = False
         elif choice == 'P' and not re.match(self.reg[3], msg):
             text = 'Formato inválido. Digite o valor do porcentual neste formato ' \
-                '(somente números, sem aspas): "1,5" ou "2". Tente novamente:'
+                '(somente números, sem aspas): "1,5" ou "2". Tente novamente ou clique em /fechar:'
             success = False
         else:
             db.info_upd(user_id, 'B_P_set', msg)

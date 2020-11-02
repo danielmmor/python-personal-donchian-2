@@ -675,9 +675,16 @@ def back(upd, context):
 def stop(upd, context):
     print('entrei no stop')
     context.user_data[START_OVER] = False
-    upd.callback_query.answer()
     text = 'Até mais!'
-    upd.callback_query.edit_message_text(text=text)
+    if upd.callback_query:
+        upd.callback_query.answer()
+        upd.callback_query.edit_message_text(text=text)
+    else:
+        fc.func_send_msg(
+            chat_id=upd.effective_user.id, 
+            text=text, 
+            reply_markup=RKR
+        )
     return EXITING
 
 def end(upd, context):
@@ -732,6 +739,7 @@ def main():
         )],
         states={HP_SELECT: []},
         fallbacks=[
+            CommandHandler('fechar', stop),
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
         ],
@@ -747,6 +755,7 @@ def main():
             MENU_HELP: menu_help_handlers,
         },
         fallbacks=[
+            CommandHandler('fechar', stop),
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
         ],
@@ -760,9 +769,10 @@ def main():
         entry_points=[CallbackQueryHandler(set_risk, pattern='^'+str(SET_RISK)+'$')],
         states={
             RISK_UPD: [CallbackQueryHandler(risk_upd, pattern='^(B|P)$')],
-            RISK_EXIT: [MessageHandler(Filters.text, risk_exit)]
+            RISK_EXIT: [MessageHandler(Filters.text & ~Filters.command, risk_exit)]
         },
         fallbacks=[
+            CommandHandler('fechar', stop),
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
         ],
@@ -775,6 +785,7 @@ def main():
         entry_points=[CallbackQueryHandler(set_mode, pattern='^'+SET_MODE+'$')],
         states={MODE_UPD: [CallbackQueryHandler(mode_upd, pattern='^(S|M),(D|W)$')]},
         fallbacks=[
+            CommandHandler('fechar', stop),
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
         ],
@@ -785,8 +796,9 @@ def main():
     )
     time_upd_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(time_upd, pattern=r'^\d$')],
-        states={TIME_EXIT: [MessageHandler(Filters.text, time_exit)]},
+        states={TIME_EXIT: [MessageHandler(Filters.text & ~Filters.command, time_exit)]},
         fallbacks=[
+            CommandHandler('fechar', stop),
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
         ],
@@ -800,6 +812,7 @@ def main():
         entry_points=[CallbackQueryHandler(set_time, pattern='^'+SET_TIME+'$')],
         states={TIME_UPD: set_time_handlers,},
         fallbacks=[
+            CommandHandler('fechar', stop),
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
         ],
@@ -817,6 +830,7 @@ def main():
         entry_points=[CallbackQueryHandler(menu_set, pattern='^'+MENU_SET+'$')],
         states={SET_TIME: menu_set_handlers,},
         fallbacks=[
+            CommandHandler('fechar', stop),
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
         ],
@@ -829,11 +843,11 @@ def main():
     portf_upd_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(portf_upd, pattern=r'^\d$')],
         states={
-            PORTF_CHANGE: [MessageHandler(Filters.text, portf_change)],
-            PORTF_CLEAR: [MessageHandler(Filters.text, portf_clear)]
+            PORTF_CHANGE: [MessageHandler(Filters.text & ~Filters.command, portf_change)],
+            PORTF_CLEAR: [MessageHandler(Filters.text & ~Filters.command, portf_clear)]
         },
         fallbacks=[
-            MessageHandler(Filters.regex('^admin_exit$'), end),
+            CommandHandler('fechar', stop),
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
         ],
@@ -847,6 +861,7 @@ def main():
         entry_points=[CallbackQueryHandler(menu_portf, pattern='^'+MENU_PORTF+'$')],
         states={PORTF_UPD: menu_portf_handlers},
         fallbacks=[
+            CommandHandler('fechar', stop),
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
         ],
@@ -858,8 +873,9 @@ def main():
     # Ticker track
     track_upd_conv = ConversationHandler(
         entry_points=[CallbackQueryHandler(track_upd, pattern=r'^\d$')],
-        states={TRACK_EXIT: [MessageHandler(Filters.text, track_exit)]},
+        states={TRACK_EXIT: [MessageHandler(Filters.text & ~Filters.command, track_exit)]},
         fallbacks=[
+            CommandHandler('fechar', stop),
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
         ],
@@ -873,6 +889,7 @@ def main():
         entry_points=[CallbackQueryHandler(menu_track, pattern='^'+MENU_TRACK+'$')],
         states={TRACK_UPD: menu_track_handlers},
         fallbacks=[
+            CommandHandler('fechar', stop),
             CallbackQueryHandler(stop, pattern='^'+EXIT+'$'),
             CallbackQueryHandler(back, pattern='^'+str(STOP)+'$')
         ],
