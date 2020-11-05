@@ -368,7 +368,7 @@ class Functions():
                     item[3] = locale.format('%1.2f', item[3], 1)
                     item[4] = locale.format('%1.2f', item[4], 1)
                     item[5] = '{:.2f}'.format(item[5])
-                    item[6] = '{:.2f}'.format(item[6])
+                    item[6] = '{:.2f}'.format(item[6][0])
                     text_A = f'{item[0]} | {item[1]} | ${item[2]} | ${item[3]} | ${item[4]}\r\n'
                     text_B = f'{item[5]}% | {item[6]}'
                     if item[7]:

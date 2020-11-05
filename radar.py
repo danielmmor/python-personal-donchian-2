@@ -18,12 +18,12 @@ class Radar():
         tables = ['S', 'M']
         scales = ['D', 'W']
         ticker_hour = self.hour_fix('17:45')
-        eod_hour = self.hour_fix('21:00')
+        eod_hour = self.hour_fix('18:01')
         for table in tables:
-            self.gather_tickers(table)
+            #self.gather_tickers(table)
             self.weekly(ticker_hour, self.gather_tickers, 'tickers', table=table)
             for scale in scales:
-                self.gather_eod(table, scale, 0)
+                #self.gather_eod(table, scale, 0)
                 self.weekly(eod_hour, self.gather_eod, 'eod', s_m=table, d_w=scale, choice=0)
         print('Radar ready.')
 
@@ -50,8 +50,10 @@ class Radar():
             return pickle.load(f)
 
     def sameday(self):
-        if (dtt.now().time() <= time(10,20) \
-                or dtt.now().time() > time(18,0)):
+        turn_point = self.hour_fix('10:20')
+        mkt_close = self.hour_fix('18:00')
+        if (dtt.now().time() <= dtt.strptime(turn_point, '%H:%M').time() \
+                or dtt.now().time() > dtt.strptime(mkt_close, '%H:%M').time()):
             return True
         else:
             return False

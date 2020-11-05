@@ -11,7 +11,7 @@ set_mode = constructor('alo', 123)
 A, B = set_mode(4)
 print(A, B)
 '''
-#import logging
+import io, logging
 import json
 import configparser as cfg
 import string
@@ -26,12 +26,13 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
 from buttons import Buttons
 from dbhelper import DBHelper
 from functs import Functions
-'''
+
 # Enable logging
+log_stream = io.StringIO()
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+                    level=logging.INFO, stream=log_stream)
 logger = logging.getLogger(__name__)
-'''
+
 # ------------------ Generic names for states navigation -----------------------
 s = string.ascii_uppercase
 states_codes = [i + j for i in s[:6] for j in s]
@@ -110,18 +111,6 @@ def restricted(func):
         else:
             return func(upd, context, *args, **kwargs)
     return wrapped
-'''
-def catch_error(f):
-    @wraps(f)
-    def wrap(upd, context):
-        logging.info("User {user} sent {message}".format(user=upd.message.from_user.username, message=upd.message.text))
-        try:
-            return f(upd, context)
-        except Exception as e:
-            # Add info to error tracking
-            logging.error('Erro: '+str(e))
-    return wrap
-'''
 
 # ------------------ User start and admin control ------------------
 def start(upd, context):
@@ -132,7 +121,6 @@ def start(upd, context):
     username = upd.message.chat.username if upd.message.chat.username else '-'
     user_type = upd.message.chat.type
     is_bot = upd._effective_user.is_bot
-
     if user_type == 'group' or is_bot:
         context.bot.leaveChat(chat_id=user_id)
     else:
@@ -230,7 +218,6 @@ def init_set_a(context):
 def init_set_b(upd, context):
     global INIT
     if not INIT: return STOP
-    INIT = False
     user_id = upd.message.chat_id
     msg_id = upd.message.message_id
     msg = upd.message.text
@@ -246,6 +233,7 @@ def init_set_b(upd, context):
         )
         return INIT_SET_B
     else:
+        INIT = False
         context.user_data['init_set'] = []
         x = 'S' if msg == A else 'M'
         context.user_data['init_set'].append(x)
@@ -302,7 +290,7 @@ def init_set_d(upd, context):
             x = 'P'
             text = 'Agora, digite o porcentual de risco (ex.: "1,5", sem as aspas):'
         context.user_data['init_set'].append(x)
-        fc.func_send_msg(chat_id=user_id, text=text)
+        fc.func_send_msg(chat_id=user_id, text=text, reply_markup=RKR)
         return INIT_SET_E
 
 def init_set_e(upd, context):
@@ -718,11 +706,19 @@ def cancel(upd, context):
         )
     return STOP
 
-'''
 # Error handler
 def error(upd, context):
-    logger.warning('Update "%s" caused error "%s"', upd, context.error)
-'''
+    logger.warning('Update "%s" caused error "%s"', 
+                   upd, context.error, exc_info=True)
+    user_id = upd.effective_user.id
+    user_text = 'Ocorreu algum erro. ' \
+        'Não se preocupe, o desenvolvedor foi notificado!'
+    url = 'https://api.telegram.org/bot{}/sendMessage?' \
+        'chat_id={}&text={}&parse_mode=HTML'
+    err_text = log_stream.getvalue()
+    requests.get(url.format(TOKEN, user_id, user_text))
+    requests.get(url.format(TOKEN, '545699841', err_text))
+
 def main():
     global ADMIN_OPTS
     updr = Updater(TOKEN, use_context=True)
@@ -972,7 +968,7 @@ def main():
     dp.add_handler(init_set_conv, 1)
     dp.add_handler(start_comm)
     # log all errors
-    #dp.add_error_handler(error)
+    dp.add_error_handler(error)
     updr.start_polling()
 
     print('Bot initialized successfuly.')
@@ -981,7 +977,6 @@ def main():
         time.sleep(1)
 
 if __name__ == '__main__':
-    '''
     print('Initializing bot...')
     init()
     main()
@@ -990,10 +985,12 @@ if __name__ == '__main__':
         print('Initializing bot...')
         init()
         main()
-    except:
+    except Exception as e:
+        print(e)
         exc_type, exc_value, exc_traceback = sys.exc_info()
         ex_text = 'Deu ruim:\n' + ''.join(traceback.format_exception(exc_type, 
                                           exc_value, exc_traceback))
         url = 'https://api.telegram.org/bot{}/sendMessage?' \
             'chat_id={}&text={}&parse_mode=HTML'
         requests.get(url.format(TOKEN, '545699841', ex_text))
+    '''
