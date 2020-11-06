@@ -718,6 +718,7 @@ def error(upd, context):
     err_text = log_stream.getvalue()
     requests.get(url.format(TOKEN, user_id, user_text))
     requests.get(url.format(TOKEN, '545699841', err_text))
+    print(err_text)
 
 def main():
     global ADMIN_OPTS

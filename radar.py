@@ -20,10 +20,10 @@ class Radar():
         ticker_hour = self.hour_fix('17:45')
         eod_hour = self.hour_fix('18:01')
         for table in tables:
-            #self.gather_tickers(table)
+            self.gather_tickers(table)
             self.weekly(ticker_hour, self.gather_tickers, 'tickers', table=table)
             for scale in scales:
-                #self.gather_eod(table, scale, 0)
+                self.gather_eod(table, scale, 0)
                 self.weekly(eod_hour, self.gather_eod, 'eod', s_m=table, d_w=scale, choice=0)
         print('Radar ready.')
 
@@ -49,14 +49,22 @@ class Radar():
         with open('obj/' + name + '.pkl', 'rb') as f:
             return pickle.load(f)
 
-    def sameday(self):
-        turn_point = self.hour_fix('10:20')
-        mkt_close = self.hour_fix('18:00')
-        if (dtt.now().time() <= dtt.strptime(turn_point, '%H:%M').time() \
-                or dtt.now().time() > dtt.strptime(mkt_close, '%H:%M').time()):
-            return True
+    def incl_last(self):
+        now_time = dtt.now().time()
+        weekday = dtt.today().weekday()
+        new_entry = dtt.strptime(self.hour_fix('10:20'), '%H:%M').time()
+        mkt_close = dtt.strptime(self.hour_fix('18:00'), '%H:%M').time()
+        if now_time > new_entry or now_time <= mkt_close:
+            a = 1
         else:
-            return False
+            a = 0
+        if (weekday == 0 and now_time > new_entry) \
+                or weekday in [1, 2, 3] \
+                or (weekday == 4 and now_time <= mkt_close):
+            b = 1
+        else:
+            b = 0
+        return [a, b]
 
     def gather_tickers(self, table):
         print('Gathering tickers for table '+table+'...')
@@ -168,7 +176,7 @@ class Radar():
             return history_all, close_all
 
     def trigger_buy(self, mode):
-        sameday = self.sameday()
+        incl_last = self.incl_last()
         history_all = self.load_obj(mode)
         mkt_open = self.hour_fix('10:00')
         mkt_close = self.hour_fix('18:00')
@@ -182,17 +190,17 @@ class Radar():
         # pegar portf do user_id
         # pegar gerenciamento de risco do user_id
         portf = '0'
-        result = dc.donchian_buy(mode, t_list, history_all, close_all, portf, sameday)
+        result = dc.donchian_buy(mode, t_list, history_all, close_all, portf, incl_last)
         return result
 
     def trigger_track(self, t_list):
-        sameday = self.sameday()
+        incl_last = self.incl_last()
         modes = ['SD','SW','MD','MW']
         for m in modes:
             t_temp = [x[0] for x in t_list if x[1] == m]
             if t_temp:
                 history_temp, close_temp = self.gather_eod(m[0], m[1], 2, t_temp)
-                result = dc.donchian_track(m, t_temp, history_temp, close_temp, sameday)
+                result = dc.donchian_track(m, t_temp, history_temp, close_temp, incl_last)
                 yield result, m
             else:
                 pass
