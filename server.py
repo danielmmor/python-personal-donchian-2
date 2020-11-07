@@ -285,7 +285,8 @@ def init_set_d(upd, context):
     else:
         if msg == A:
             x = 'B'
-            text = 'Agora, digite o número de bloquinhos que serão utilizados (ex.: "8", sem as aspas):'
+            text = 'Agora, digite o número de bloquinhos ' \
+                'que serão utilizados (ex.: "8", sem as aspas):'
         else:
             x = 'P'
             text = 'Agora, digite o porcentual de risco (ex.: "1,5", sem as aspas):'
@@ -317,7 +318,7 @@ def init_set_f(upd, context):
         return INIT_SET_F
 
 # ------------------ Main menu ------------------
-# @catch_error
+
 def menu(upd, context):
     print('entrei no menu')
     text = 'MENU PRINCIPAL - Selecione uma das opções:\n\r'
@@ -334,7 +335,7 @@ def menu(upd, context):
             user_allowed = int(query[0][4])
             if user_allowed:
                 upd.message.reply_text('Olá! Se precisar de ajuda, '
-                    'contate o @DanMoreira.')
+                    'contate o @DanMMoreira.')
                 upd.message.reply_text(text=text, reply_markup=IKM(buttons))
                 context.user_data[START_OVER] = True
                 return MENU
@@ -971,7 +972,7 @@ def main():
     # log all errors
     dp.add_error_handler(error)
     updr.start_polling()
-
+    
     print('Bot initialized successfuly.')
     while True:
         schedule.run_pending()

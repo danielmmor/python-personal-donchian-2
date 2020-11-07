@@ -40,6 +40,7 @@ class Radar():
             schedule.every().wednesday.at(hour).do(func, **kwargs).tag(tag)
             schedule.every().thursday.at(hour).do(func, **kwargs).tag(tag)
             schedule.every().friday.at(hour).do(func, **kwargs).tag(tag)
+            schedule.every().saturday.at(hour).do(func, **kwargs).tag(tag)
 
     def save_obj(self, obj, name):
         with open('obj/' + name + '.pkl', 'wb+') as f:
@@ -141,9 +142,13 @@ class Radar():
                 data = dataY.to_dict()
                 for t, t_sa in zip(temp, temp_sa):
                     if len(temp) == 1:
-                        d_high, d_low, d_close = data['High'], data['Low'], dataY['Close']
+                        d_high = data['High']
+                        d_low = data['Low']
+                        d_close = dataY['Close']
                     else:
-                        d_high, d_low, d_close = data[('High', t_sa)], data[('Low', t_sa)], dataY[('Close', t_sa)]
+                        d_high = data[('High', t_sa)]
+                        d_low = data[('Low', t_sa)]
+                        d_close = dataY[('Close', t_sa)]
                     if choice == 0:
                         high = [float('%.2f' % d_high[x]) for x in d_high]
                         low = [float('%.2f' % d_low[x]) for x in d_low]
@@ -190,7 +195,9 @@ class Radar():
         # pegar portf do user_id
         # pegar gerenciamento de risco do user_id
         portf = '0'
-        result = dc.donchian_buy(mode, t_list, history_all, close_all, portf, incl_last)
+        result = dc.donchian_buy(
+            mode, t_list, history_all, close_all, portf, incl_last
+        )
         return result
 
     def trigger_track(self, t_list):
@@ -200,7 +207,9 @@ class Radar():
             t_temp = [x[0] for x in t_list if x[1] == m]
             if t_temp:
                 history_temp, close_temp = self.gather_eod(m[0], m[1], 2, t_temp)
-                result = dc.donchian_track(m, t_temp, history_temp, close_temp, incl_last)
+                result = dc.donchian_track(
+                    m, t_temp, history_temp, close_temp, incl_last
+                )
                 yield result, m
             else:
                 pass

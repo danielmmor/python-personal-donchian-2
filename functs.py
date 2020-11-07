@@ -50,15 +50,15 @@ class Functions():
         print('Scheduling user reports...')
         users = db.get_everything('users')
         if users:
-            for item in users:
-                if item[4]:
-                    hour = self.rd.hour_fix(item[9])
+            for user in users:
+                if user[4]:
+                    hour = self.rd.hour_fix(user[9])
                     kwargs = {
-                        'user_id': item[0],
-                        's_m': item[7],
-                        'd_w': item[8],
+                        'user_id': user[0],
+                        's_m': user[7],
+                        'd_w': user[8],
                     }
-                    self.rd.weekly(hour, self.func_radar_auto, str(item[0]), **kwargs)
+                    self.rd.weekly(hour, self.func_radar_auto, str(user[0]), **kwargs)
         else:
             pass
         print('Reports scheduled.')
@@ -75,7 +75,7 @@ class Functions():
         if exists:
             admin_text = f'Usuário mandou novamente:\nuser_id: {user_id}\n' \
                          f'nome: {name}\nusername: @{username}'
-            user_text = 'Você já deu o start! Algum problema? Pergunte ao @DanMoreira!'
+            user_text = 'Você já deu o start! Algum problema? Pergunte ao @DanMMoreira!'
         else:
             dia = str(dtt.now().date())
             db.user_start(user_id, name, username, dia)
@@ -186,7 +186,7 @@ class Functions():
                     'às 10:30. ' \
                     'Você pode mudar todas essas configurações através do /menu e ' \
                     'lá você também pode obter o relatório manualmente. Para saber mais informações ' \
-                    'sobre o bot ou se precisa de ajuda, contate o desenvolvedor @DanMoreira. ' \
+                    'sobre o bot ou se precisa de ajuda, contate o desenvolvedor @DanMMoreira. ' \
                     'Este bot ainda está em fase de testes, portanto algumas coisas podem estar... ' \
                     'esquisitas. Mas muitas coisas estão por vir!\nAproveite!' # Se escolheu a escala Semanal, receberá apenas às segundas-feiras.
                 return text, True
@@ -402,10 +402,12 @@ class Functions():
         return text
 
     def func_radar_auto(self, user_id, s_m, d_w):
-        mode = s_m+d_w
-        mode = self.modes.index(mode)
-        buy_text = self.func_radar('buy', user_id, mode)
-        track_text = self.func_radar('track', user_id, mode)
-        self.func_send_msg(user_id, buy_text)
-        self.func_send_msg(user_id, track_text)
-
+        if s_m == None or d_w == None:
+            pass
+        else:
+            mode = s_m+d_w
+            mode = self.modes.index(mode)
+            buy_text = self.func_radar('buy', user_id, mode)
+            track_text = self.func_radar('track', user_id, mode)
+            self.func_send_msg(user_id, buy_text)
+            self.func_send_msg(user_id, track_text)
