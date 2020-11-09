@@ -130,6 +130,7 @@ def start(upd, context):
 
 @restricted
 def admin_a(upd, context):
+    print('entrei no admin a')
     global curr_admin_id, ADMIN_OPTS
     curr_admin_id = upd.message.chat_id
     msg_id = upd.message.message_id
@@ -174,6 +175,7 @@ def admin_b(upd, context):
         return ADMIN_C
 
 def admin_c(upd, context):
+    print('entrei no admin c')
     msg_id = upd.message.message_id
     msg = upd.message.text
     choice = context.user_data['selection']
@@ -197,6 +199,7 @@ def admin_c(upd, context):
         return ADMIN_C
 
 def admin_d(upd, context):
+    print('entrei no admin d')
     admin_text = 'Formulário enviado!'
     upd.callback_query.edit_message_text(text=admin_text)
     cancel(upd, context)
@@ -204,8 +207,11 @@ def admin_d(upd, context):
 
 def init_set_a(context):
     global INIT
+    print('entrei no init a; INIT:', INIT)
     INIT = True
+    print('INIT:', INIT)
     user_id = context.user_data['user_id']
+    print(user_id)
     text = 'Você foi autorizado. Agora, uma etapa muito importante: vamos ' \
            'configurar o seu perfil em poucos passos. Você vai poder modificar depois se quiser.'
     fc.func_send_msg(chat_id=user_id, text=text)
@@ -217,8 +223,10 @@ def init_set_a(context):
 
 def init_set_b(upd, context):
     global INIT
+    print('entrei no init b', INIT)
     if not INIT: return STOP
     user_id = upd.message.chat_id
+    print(user_id)
     msg_id = upd.message.message_id
     msg = upd.message.text
     A, B = 'Small Caps', 'Mid Large Caps'
@@ -245,6 +253,7 @@ def init_set_b(upd, context):
 
 def init_set_c(upd, context):
     user_id = upd.message.chat_id
+    print('entrei no init c', user_id)
     msg_id = upd.message.message_id
     msg = upd.message.text
     A, B = 'Diário', 'Semanal'
@@ -269,6 +278,7 @@ def init_set_c(upd, context):
 
 def init_set_d(upd, context):
     user_id = upd.message.chat_id
+    print('entrei no init d', user_id)
     msg_id = upd.message.message_id
     msg = upd.message.text
     A, B = 'Bloquinho por operação', 'Porcentagem relativa ao stop'
@@ -295,6 +305,7 @@ def init_set_d(upd, context):
         return INIT_SET_E
 
 def init_set_e(upd, context):
+    print('entrei no init e')
     msg = upd.message.text
     text, success = fc.func_init_check(context.user_data['init_set'][2], msg)
     upd.message.reply_text(text)
@@ -306,6 +317,7 @@ def init_set_e(upd, context):
 
 def init_set_f(upd, context):
     user_id = upd.effective_user.id
+    print('entrei no init f', user_id)
     all_data = context.user_data['init_set']
     msg = upd.message.text
     text, success = fc.func_init_check('p', msg, user_id, all_data)
@@ -313,6 +325,7 @@ def init_set_f(upd, context):
     if success:
         all_data.append(msg)
         db.user_init(user_id, all_data)
+        print('init concluído com sucesso', user_id)
         return -1
     else:
         return INIT_SET_F
@@ -713,13 +726,15 @@ def error(upd, context):
                    upd, context.error, exc_info=True)
     user_id = upd.effective_user.id
     user_text = 'Ocorreu algum erro. ' \
-        'Não se preocupe, o desenvolvedor foi notificado!'
+        'Não se preocupe, o desenvolvedor foi notificado! Você pode ' \
+        'continuar usando o bot normalmente pelo /menu.'
     url = 'https://api.telegram.org/bot{}/sendMessage?' \
         'chat_id={}&text={}&parse_mode=HTML'
     err_text = log_stream.getvalue()
     requests.get(url.format(TOKEN, user_id, user_text))
     requests.get(url.format(TOKEN, '545699841', err_text))
     print(err_text)
+    return -1
 
 def main():
     global ADMIN_OPTS

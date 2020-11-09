@@ -93,8 +93,8 @@ class Functions():
         # 3 se pesquisa: info_0 = campo, info_1 = pesquisa;
         # 4 pesquisa por data: info_0 = data inicial, info_1 = data final
         # 5 se reseta:   info_0 = user_id
+        # The query:
         try:
-            # The query:
             if choice < 3:
                 y = re.match(self.reg[0], info[0])
                 if not y:
@@ -118,7 +118,7 @@ class Functions():
                         and re.match(self.reg[1], info[1])):
                     info[0] = self.func_time(info[0], '/')
                     info[1] = self.func_time(info[1], '/')
-                    res = db.admin_queries(info[0], info[1], info[2], choice)
+                    res = db.admin_queries(info[0], info[1], choice=choice)
             # The response:
             if res == 0:
                 response = 'Este usuário não existe! Tente novamente ou clique em /cancelar.'

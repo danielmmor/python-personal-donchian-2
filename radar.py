@@ -158,8 +158,11 @@ class Radar():
                         low = [float('%.2f' % d_low[x]) for x in d_low]
                         history_all[t] = low
                     closing = float('%.2f' % d_close[-1])
-                    if closing == 0 or np.isnan(closing):
-                        close_all[t] = float('%.2f' % d_close[-2])
+                    c = 2
+                    while closing == 0 \
+                            or np.isnan(closing) \
+                            or str(closing) == 'nan':
+                        closing = float('%.2f' % d_close[-c])
                     else:
                         close_all[t] = closing
                 k += 1
