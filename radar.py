@@ -40,7 +40,6 @@ class Radar():
             schedule.every().wednesday.at(hour).do(func, **kwargs).tag(tag)
             schedule.every().thursday.at(hour).do(func, **kwargs).tag(tag)
             schedule.every().friday.at(hour).do(func, **kwargs).tag(tag)
-            schedule.every().saturday.at(hour).do(func, **kwargs).tag(tag)
 
     def save_obj(self, obj, name):
         with open('obj/' + name + '.pkl', 'wb+') as f:
@@ -163,8 +162,9 @@ class Radar():
                             or np.isnan(closing) \
                             or str(closing) == 'nan':
                         closing = float('%.2f' % d_close[-c])
-                    else:
-                        close_all[t] = closing
+                        c += 1
+                        if c == 10: break
+                    close_all[t] = closing
                 k += 1
             except Exception as e:
                 print('Error gathering EOD:')
@@ -183,23 +183,22 @@ class Radar():
         else:
             return history_all, close_all
 
-    def trigger_buy(self, mode):
+    def trigger_buy(self, mode, portf, b_p, b_p_set):
         incl_last = self.incl_last()
         history_all = self.load_obj(mode)
         mkt_open = self.hour_fix('10:00')
         mkt_close = self.hour_fix('18:00')
+        weekday = dtt.today().weekday()
         if dtt.now().time() < dtt.strptime(mkt_open, '%H:%M').time() \
-                or dtt.now().time() > dtt.strptime(mkt_close, '%H:%M').time():
+                or dtt.now().time() > dtt.strptime(mkt_close, '%H:%M').time() \
+                or weekday in [5, 6]:
             close_all = self.load_obj(mode + '_close')
         else:
             close_all = self.gather_eod(mode[0], mode[1], 1)
         t_list = db.get_everything('stocks_'+mode[0])
         t_list = [x[0] for x in t_list]
-        # pegar portf do user_id
-        # pegar gerenciamento de risco do user_id
-        portf = '0'
         result = dc.donchian_buy(
-            mode, t_list, history_all, close_all, portf, incl_last
+            mode, t_list, history_all, close_all, portf, b_p, b_p_set, incl_last
         )
         return result
 

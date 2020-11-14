@@ -98,7 +98,7 @@ def init():
         'Pesquisar por data',
         'Resetar usuário'
     ]
-    INIT = False
+    INIT = {}
 
 def restricted(func):
     @wraps(func)
@@ -206,11 +206,11 @@ def admin_d(upd, context):
     init_set_a(context)
 
 def init_set_a(context):
-    global INIT
-    print('entrei no init a; INIT:', INIT)
-    INIT = True
-    print('INIT:', INIT)
     user_id = context.user_data['user_id']
+    global INIT
+    print('entrei no init a')
+    INIT[user_id] = True
+    print('INIT:', INIT)
     print(user_id)
     text = 'Você foi autorizado. Agora, uma etapa muito importante: vamos ' \
            'configurar o seu perfil em poucos passos. Você vai poder modificar depois se quiser.'
@@ -222,10 +222,13 @@ def init_set_a(context):
     return INIT_SET_B
 
 def init_set_b(upd, context):
+    user_id = upd.message.chat_id
     global INIT
     print('entrei no init b', INIT)
-    if not INIT: return STOP
-    user_id = upd.message.chat_id
+    try:
+        if not INIT[str(user_id)]: return STOP
+    except:
+        return STOP
     print(user_id)
     msg_id = upd.message.message_id
     msg = upd.message.text
@@ -241,7 +244,7 @@ def init_set_b(upd, context):
         )
         return INIT_SET_B
     else:
-        INIT = False
+        INIT[user_id] = False
         context.user_data['init_set'] = []
         x = 'S' if msg == A else 'M'
         context.user_data['init_set'].append(x)
@@ -949,7 +952,7 @@ def main():
     )
     # Initial settings
     init_set_conv = ConversationHandler(
-        entry_points=[MessageHandler(Filters.text, init_set_b)],
+        entry_points=[MessageHandler(Filters.text & ~Filters.command, init_set_b)],
         states={
             INIT_SET_C: [MessageHandler(Filters.text, init_set_c)],
             INIT_SET_D: [MessageHandler(Filters.text, init_set_d)],

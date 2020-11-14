@@ -213,19 +213,19 @@ class Functions():
         if choice < 3 and re.match(self.reg[3], msg):
             if msg.rfind(','): msg = msg.replace(',', '.')
             msg = float(msg)
-            port = db.get_info(user_id)[0][6]
-            if port.rfind(','): port = port.replace(',', '.')
-            port = float(port)
-            if choice == 0: port += msg
-            if choice == 1: port -= msg
-            if choice == 2: port = msg
-            port = '{:.2f}'.format(port).replace('.', ',')
-            db.info_upd(user_id, 'portf', port)
-            text = 'Pronto! O novo capital é de R$'+port+'.\n\rAté mais!'
+            portf = db.get_info(user_id)[0][6]
+            if portf.rfind(','): portf = portf.replace(',', '.')
+            portf = float(portf)
+            if choice == 0: portf += msg
+            if choice == 1: portf -= msg
+            if choice == 2: portf = msg
+            portf = '{:.2f}'.format(portf).replace('.', ',')
+            db.info_upd(user_id, 'portf', portf)
+            text = 'Pronto! O novo capital é de R$'+portf+'.\n\rAté mais!'
             return text, True
         elif choice == 3 and re.match('^(Sim)$', msg):
-            port = '0'
-            db.info_upd(user_id, 'portf', port)
+            portf = '0'
+            db.info_upd(user_id, 'portf', portf)
             text = 'Pronto! O capital foi zerado.\n\rAté mais!'
             return text
         else:
@@ -354,8 +354,16 @@ class Functions():
 
     def func_radar(self, choice, user_id, mode):
         if choice == 'buy':
+            info = db.get_info(user_id)
+            portf = info[0][6]
+            if portf.rfind(','): portf = portf.replace(',', '.')
+            portf = float(portf)
+            b_p = info[0][11]
+            b_p_set = info[0][12]
+            if b_p_set.rfind(','): b_p_set = b_p_set.replace(',', '.')
+            b_p_set = float(b_p_set)
             m = self.modes[int(mode)]
-            stocks = self.rd.trigger_buy(m)
+            stocks = self.rd.trigger_buy(m, portf, b_p, b_p_set)
             if stocks == []:
                 text = 'No momento, nenhum ativo está perto de romper o canal superior.\r\nRelaxe!'
             else:
@@ -387,12 +395,12 @@ class Functions():
                         if item[1]:
                             item[1] = locale.format('%1.2f', item[1], 1)
                             item[2] = locale.format('%1.2f', item[2], 1)
-                            text_A = f'{item[0]} | ${item[1]} | ${item[2]}'
+                            text_A = f'{item[0]} | ${item[1]}'
                             if len(item) == 4:
                                 item[3] = locale.format('%1.2f', item[3], 1)
-                                text += f'<i>!!{text_A} -> ${item[3]}!!</i>\r\n\r\n'
+                                text += f'<i>!!{text_A} | ${item[3]} -> ${item[2]}!!</i>\r\n\r\n'
                             else:
-                                text += text_A+'\r\n\r\n'
+                                text += f'{text_A} | ${item[2]}\r\n\r\n'
                         else:
                             text += f'{item[0]} | dados não encontrados - ' \
                                 'ativo incorreto ou muito novo.'
