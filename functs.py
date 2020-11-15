@@ -362,11 +362,13 @@ class Functions():
             b_p_set = info[0][12]
             if b_p_set.rfind(','): b_p_set = b_p_set.replace(',', '.')
             b_p_set = float(b_p_set)
+            order = 0 if info[0][13] == None else int(info[0][13])
             m = self.modes[int(mode)]
             stocks = self.rd.trigger_buy(m, portf, b_p, b_p_set)
             if stocks == []:
                 text = 'No momento, nenhum ativo está perto de romper o canal superior.\r\nRelaxe!'
             else:
+                if order: stocks.sort(key=lambda x:x[order])
                 text = '  | ------ Compra - '+self.sm_dw[m]+' ------ | \r\n' \
                     'Ação | Vol | Sup | Fech | Inf\r\nDist | Trend\r\n' \
                     '<i>!!Os ativos em atenção romperam o canal superior nos ' \
@@ -376,7 +378,7 @@ class Functions():
                     item[3] = locale.format('%1.2f', item[3], 1)
                     item[4] = locale.format('%1.2f', item[4], 1)
                     item[5] = '{:.2f}'.format(item[5])
-                    item[6] = '{:.2f}'.format(item[6][0])
+                    item[6] = '{:.2f}'.format(item[6])
                     text_A = f'{item[0]} | {item[1]} | ${item[2]} | ${item[3]} | ${item[4]}\r\n'
                     text_B = f'{item[5]}% | {item[6]}'
                     if item[7]:
@@ -419,3 +421,32 @@ class Functions():
             track_text = self.func_radar('track', user_id, mode)
             self.func_send_msg(user_id, buy_text)
             self.func_send_msg(user_id, track_text)
+        
+    def func_order(self, user_id, order=False):
+        orders = [
+            [
+                'Índice do ativo (Ação)',
+                'Canal superior (Sup)',
+                'Último fechamento (Fech)',
+                'Canal inferior (Inf)',
+                'Distância (Dist)',
+                '"Trendabilidade" (Trend)'
+            ], [
+                '"Ação"',
+                '"Sup"',
+                '"Fech"',
+                '"Inf"',
+                '"Dist"',
+                '"Trend"'
+            ]
+        ]
+        if not order:
+            info = db.get_info(user_id)
+            if info[0][13] == None:
+                text = orders[0][0]
+            else:
+                text = orders[0][int(info[0][13])]
+        else:
+            db.info_upd(user_id, 'sorting', order)
+            text = orders[1][int(order)]
+        return text

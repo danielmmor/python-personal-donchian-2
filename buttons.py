@@ -82,8 +82,8 @@ class Buttons():
             IKB(text='Relatório de compra', callback_data='buy')
         ], [
             IKB(text='Relatório de venda (carteira)', callback_data='track')
-        #], [
-        #    IKB(text='Ordenar resultados por...', callback_data=self.RADAR_ORDER)
+        ], [
+            IKB(text='Ordenar resultados por...', callback_data='order')
         ], [
             IKB(text='Voltar', callback_data=str(self.STOP)),
             IKB(text='Fechar', callback_data=self.EXIT)
@@ -99,13 +99,13 @@ class Buttons():
             IKB(text='Fechar', callback_data=self.EXIT)
         ]]
         self.all_states[self.RADAR_ORDER] = [[
-            IKB(text='Nome do ativo (Stock)', callback_data='1')
+            IKB(text='Índice do ativo (Ação)', callback_data='0')
         ], [
-            IKB(text='Canal superior (DUp)', callback_data='2')
+            IKB(text='Canal superior (Sup)', callback_data='2')
         ], [
-            IKB(text='Último fechamento (Close)', callback_data='3')
+            IKB(text='Último fechamento (Fech)', callback_data='3')
         ], [
-            IKB(text='Canal inferior (DDown)', callback_data='4')
+            IKB(text='Canal inferior (Inf)', callback_data='4')
         ], [
             IKB(text='Distância (Dist)', callback_data='5')
         ], [

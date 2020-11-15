@@ -365,10 +365,11 @@ def menu(upd, context):
 def menu_radar(upd, context):
     print('entrei no menu_radar')
     context.user_data[PREV_LEVEL] = menu
-    #ordem = fc.func_ordem (?) db.get_ordem [ordenação, ordenar por]
-    text = 'RELATÓRIOS - Selecione a análise:' 
-        #'ou modifique a ordenação dos resultados.\n\r' \
-        #   'Atual: ordenar por +ordem
+    user_id = upd.effective_user.id
+    order = fc.func_order(user_id)
+    text = 'RELATÓRIOS - Selecione a análise ' \
+        'ou modifique a ordenação dos resultados.\n\r' \
+        'Atual: ordenar por '+order
     buttons = bt.buttons(MENU_RADAR)
     upd.callback_query.answer()
     upd.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
@@ -379,11 +380,14 @@ def menu_radar(upd, context):
 def radar_a(upd, context):
     print('entrei no radar_a')
     choice = upd.callback_query.data
-    context.user_data['choice'] = 'buy'
     if choice == 'buy':
+        context.user_data['choice'] = 'buy'
         text = 'Selecione o modo:'
         buttons = bt.buttons(RADAR_BUY)
-    # elif choice == RADAR_ORDER:
+    elif choice == 'order':
+        context.user_data['choice'] = 'order'
+        text = 'Selecione a referência:'
+        buttons = bt.buttons(RADAR_ORDER)
     upd.callback_query.answer()
     upd.callback_query.edit_message_text(text=text, reply_markup=IKM(buttons))
     return RADAR_B
@@ -392,12 +396,19 @@ def radar_b(upd, context):
     print('entrei no radar_b')
     choice = context.user_data['choice']
     user_id = upd.effective_user.id
-    mode = upd.callback_query.data if choice == 'buy' else None
-    text = 'Gerando relatório, aguarde um momento.'
+    if choice == 'buy':
+        mode = upd.callback_query.data
+        text = 'Gerando relatório, aguarde um momento.'
+    elif choice == 'order':
+        mode = upd.callback_query.data
+        order = fc.func_order(user_id, mode)
+        text = 'O relatório de compra será ordenado pelo '+order+'' \
+            ' a partir de agora.'
     upd.callback_query.answer()
     upd.callback_query.edit_message_text(text=text)
-    context.bot.sendChatAction(chat_id=user_id, action='typing')
     context.user_data[START_OVER] = False
+    if choice == 'order': return EXITING
+    context.bot.sendChatAction(chat_id=user_id, action='typing')
     report = fc.func_radar(choice, user_id, mode)
     fc.func_send_msg(chat_id=user_id, text=report)
     return EXITING
@@ -919,7 +930,7 @@ def main():
         entry_points=[CallbackQueryHandler(menu_radar, pattern='^'+MENU_RADAR+'$')],
         states={
             RADAR_A: [
-                CallbackQueryHandler(radar_a, pattern='^buy$'),
+                CallbackQueryHandler(radar_a, pattern='^buy|order$'),
                 CallbackQueryHandler(radar_b, pattern='^track$')
             ],
             RADAR_B: [CallbackQueryHandler(radar_b, pattern=r'^\d$')]
@@ -966,12 +977,12 @@ def main():
     admin_conv = ConversationHandler(
         entry_points=[CommandHandler('admin', admin_a)],
         states={
-            ADMIN_B: [MessageHandler(Filters.regex('^('+ADMIN_OPTS[0]+'|' \
+            ADMIN_B: [MessageHandler(Filters.regex('^'+ADMIN_OPTS[0]+'|' \
                                                    +ADMIN_OPTS[1]+'|' \
                                                    +ADMIN_OPTS[2]+'|' \
                                                    +ADMIN_OPTS[3]+'|' \
                                                    +ADMIN_OPTS[4]+'|' \
-                                                   +ADMIN_OPTS[5]+')$'), admin_b)],
+                                                   +ADMIN_OPTS[5]+'$'), admin_b)],
             ADMIN_C: [MessageHandler(~Filters.command, admin_c)],
             ADMIN_D: [CallbackQueryHandler(admin_d, pattern='^'+ADMIN_D+'$')]
         },
