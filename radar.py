@@ -55,7 +55,7 @@ class Radar():
         new_entry = dtt.strptime(self.hour_fix('10:20'), '%H:%M').time()
         mkt_close = dtt.strptime(self.hour_fix('18:00'), '%H:%M').time()
         if now_time > new_entry or now_time <= mkt_close:
-            a = 1
+            a = 0 #era 1, mas usando sempre os dados de 18h, não precisa mais
         else:
             a = 0
         if (weekday == 0 and now_time > new_entry) \

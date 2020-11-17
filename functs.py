@@ -81,7 +81,7 @@ class Functions():
             db.user_start(user_id, name, username, dia)
             admin_text = f'Novo usuário:\nuser_id: {user_id}\n' \
                          f'nome: {name}\nusername: @{username}'
-            user_text = 'Bem-vindo, investidor! Por favor, aguarde enquanto preparamos tudo.'
+            user_text = 'Bem-vindo, investidor! Por favor, aguarde até ser autorizado.'
         return admin_text, user_text
 
     def func_admin(self, msg, choice):
@@ -324,8 +324,8 @@ class Functions():
         choice = choice.replace(',', '')
         db.info_upd(user_id, 'S_M', change[0])
         db.info_upd(user_id, 'D_W', change[1])
-        text = 'O modo foi atualizado com sucesso! As mensagens automáticas de radar e ' \
-            'monitoramento de carteira possuirão classe de ações e escala ' \
+        text = 'O modo foi atualizado com sucesso! As mensagens automáticas de radar ' \
+            'possuirão classe de ações e escala ' \
             'equivalentes a '+self.sm_dw[choice]+'.\r\nAté mais!'
         return text
     
@@ -426,6 +426,7 @@ class Functions():
         orders = [
             [
                 'Índice do ativo (Ação)',
+                'Volume (vol)',
                 'Canal superior (Sup)',
                 'Último fechamento (Fech)',
                 'Canal inferior (Inf)',
@@ -433,6 +434,7 @@ class Functions():
                 '"Trendabilidade" (Trend)'
             ], [
                 '"Ação"',
+                '"Vol"',
                 '"Sup"',
                 '"Fech"',
                 '"Inf"',

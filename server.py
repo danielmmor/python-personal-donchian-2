@@ -209,7 +209,7 @@ def init_set_a(context):
     user_id = context.user_data['user_id']
     global INIT
     print('entrei no init a')
-    INIT[user_id] = True
+    INIT[str(user_id)] = True
     print('INIT:', INIT)
     print(user_id)
     text = 'Você foi autorizado. Agora, uma etapa muito importante: vamos ' \
