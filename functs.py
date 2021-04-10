@@ -322,6 +322,15 @@ class Functions():
     def func_mode_upd(self, user_id, choice):
         change = choice.split(',')
         choice = choice.replace(',', '')
+        user = db.admin_queries('user_id', str(user_id), choice=3)
+        hour = user[0][9]
+        kwargs = {
+            'user_id': user_id,
+            's_m': change[0],
+            'd_w': change[1],
+        }
+        schedule.clear(str(user_id))
+        self.rd.weekly(hour, self.func_radar_auto, str(user_id), **kwargs)
         db.info_upd(user_id, 'S_M', change[0])
         db.info_upd(user_id, 'D_W', change[1])
         text = 'O modo foi atualizado com sucesso! As mensagens automáticas de radar ' \
