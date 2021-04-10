@@ -1,6 +1,7 @@
 import requests
 import pickle
 import schedule
+import os, glob
 import time as tm
 import numpy as np
 import yfinance as yf
@@ -19,13 +20,20 @@ class Radar():
         scales = ['D', 'W']
         ticker_hour = self.hour_fix('17:45')
         eod_hour = self.hour_fix('18:01')
+        reset_hour = self.hour_fix('17:59')
+        self.weekly(reset_hour, self.reset_obj, 'eod', path='./obj/*')
         for table in tables:
-            #self.gather_tickers(table)
-            self.weekly(ticker_hour, self.gather_tickers, 'tickers', table=table)
+            self.gather_tickers(table)
+            self.weekly(ticker_hour, self.gather_tickers, 'eod', table=table)
             for scale in scales:
-                #self.gather_eod(table, scale, 0)
+                self.gather_eod(table, scale, 0)
                 self.weekly(eod_hour, self.gather_eod, 'eod', s_m=table, d_w=scale, choice=0)
         print('Radar ready.')
+
+    def reset_obj(self, path):
+        files = glob.glob(path)
+        for f in files:
+            os.remove(f)
 
     def hour_fix(self, hour):
         offset = 0
@@ -47,8 +55,11 @@ class Radar():
             pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
     def load_obj(self, name):
-        with open('obj/' + name + '.pkl', 'rb') as f:
-            return pickle.load(f)
+        try:
+            with open('obj/' + name + '.pkl', 'rb') as f:
+                return pickle.load(f)
+        except:
+            return False
 
     def incl_last(self):
         now_time = dtt.now().time()
@@ -192,7 +203,7 @@ class Radar():
         else:
             return history_all, close_all
 
-    def trigger_buy(self, mode, portf, b_p, b_p_set):
+    def trigger_buy(self, mode, portf, b_p, b_p_set, auto=False, hour=False):
         incl_last = self.incl_last()
         history_all = self.load_obj(mode)
         mkt_open = self.hour_fix('10:00')
@@ -203,7 +214,15 @@ class Radar():
                 or weekday in [5, 6]:
             close_all = self.load_obj(mode + '_close')
         else:
-            close_all = self.gather_eod(mode[0], mode[1], 1)
+            if auto:
+                close_all = self.load_obj(mode + '_close' + hour)
+                if not close_all:
+                    close_all = self.gather_eod(mode[0], mode[1], 1)
+                    self.save_obj(close_all, mode + '_close' + hour)
+                else:
+                    pass
+            else:
+                close_all = self.gather_eod(mode[0], mode[1], 1)
         t_list = db.get_everything('stocks_'+mode[0])
         t_list = [x[0] for x in t_list]
         result = dc.donchian_buy(

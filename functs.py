@@ -323,7 +323,7 @@ class Functions():
         change = choice.split(',')
         choice = choice.replace(',', '')
         user = db.admin_queries('user_id', str(user_id), choice=3)
-        hour = user[0][9]
+        hour = self.rd.hour_fix(user[0][9])
         kwargs = {
             'user_id': user_id,
             's_m': change[0],
@@ -361,9 +361,10 @@ class Functions():
             success = True
         return text, success
 
-    def func_radar(self, choice, user_id, mode):
+    def func_radar(self, choice, user_id, mode, auto=False):
         if choice == 'buy':
             info = db.get_info(user_id)
+            hour = info[0][9].replace(':', '-')
             portf = info[0][6]
             if portf.rfind(','): portf = portf.replace(',', '.')
             portf = float(portf)
@@ -373,7 +374,7 @@ class Functions():
             b_p_set = float(b_p_set)
             order = 0 if info[0][13] == None else int(info[0][13])
             m = self.modes[int(mode)]
-            stocks = self.rd.trigger_buy(m, portf, b_p, b_p_set)
+            stocks = self.rd.trigger_buy(m, portf, b_p, b_p_set, auto, hour)
             if stocks == []:
                 text = 'No momento, nenhum ativo está perto de romper o canal superior.\r\nRelaxe!'
             else:
@@ -426,7 +427,7 @@ class Functions():
         else:
             mode = s_m+d_w
             mode = self.modes.index(mode)
-            buy_text = self.func_radar('buy', user_id, mode)
+            buy_text = self.func_radar('buy', user_id, mode, True)
             track_text = self.func_radar('track', user_id, mode)
             self.func_send_msg(user_id, buy_text)
             self.func_send_msg(user_id, track_text)

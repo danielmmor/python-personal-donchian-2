@@ -337,7 +337,6 @@ def init_set_f(upd, context):
 
 def menu(upd, context):
     print('entrei no menu')
-    print(schedule.jobs)
     text = 'MENU PRINCIPAL - Selecione uma das opções:\n\r'
     buttons = bt.buttons(MENU)
     if context.user_data.get(START_OVER):
