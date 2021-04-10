@@ -244,7 +244,7 @@ def init_set_b(upd, context):
         )
         return INIT_SET_B
     else:
-        INIT[user_id] = False
+        INIT[str(user_id)] = False
         context.user_data['init_set'] = []
         x = 'S' if msg == A else 'M'
         context.user_data['init_set'].append(x)
@@ -396,8 +396,8 @@ def radar_b(upd, context):
     print('entrei no radar_b')
     choice = context.user_data['choice']
     user_id = upd.effective_user.id
-    if choice == 'buy':
-        mode = upd.callback_query.data
+    if choice == 'buy' or choice == 'track':
+        mode = upd.callback_query.data if choice == 'buy' else None
         text = 'Gerando relatório, aguarde um momento.'
     elif choice == 'order':
         mode = upd.callback_query.data

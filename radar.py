@@ -28,7 +28,7 @@ class Radar():
         print('Radar ready.')
 
     def hour_fix(self, hour):
-        offset = 0
+        offset = 3
         hour = dtt.strptime(hour, '%H:%M')
         hour += timedelta(hours=offset)
         hour = hour.strftime('%H:%M')
@@ -108,7 +108,7 @@ class Radar():
             #t_list = t_list[1:]
         elif choice == 1:
             print('EOD: close')
-            days = 4
+            days = 10
             interval = '1d' if d_w == 'D' else '1wk'
             t_list = db.get_everything('stocks_'+s_m)
             t_list = [x[0] for x in t_list]
@@ -140,34 +140,42 @@ class Radar():
                                     auto_adjust=True, start=before, end=now)
                 data = dataY.to_dict()
                 for t, t_sa in zip(temp, temp_sa):
-                    if len(temp) == 1:
-                        d_high = data['High']
-                        d_low = data['Low']
-                        d_close = dataY['Close']
-                    else:
-                        d_high = data[('High', t_sa)]
-                        d_low = data[('Low', t_sa)]
-                        d_close = dataY[('Close', t_sa)]
-                    if choice == 0:
-                        high = [float('%.2f' % d_high[x]) for x in d_high]
-                        low = [float('%.2f' % d_low[x]) for x in d_low]
-                        avg = [(x+y)/2 for x, y in zip(*[high, low])]
-                        history_all[t] = [high, low, avg]
-                    elif choice == 2:
-                        low = [float('%.2f' % d_low[x]) for x in d_low]
-                        history_all[t] = low
-                    closing = float('%.2f' % d_close[-1])
-                    c = 2
-                    while closing == 0 \
-                            or np.isnan(closing) \
-                            or str(closing) == 'nan':
-                        closing = float('%.2f' % d_close[-c])
-                        c += 1
-                        if c == 10: break
-                    close_all[t] = closing
+                    try:
+                        if len(temp) == 1:
+                            d_high = data['High']
+                            d_low = data['Low']
+                            d_close = dataY['Close']
+                            d_today_h = dataY['High']
+                        else:
+                            d_high = data[('High', t_sa)]
+                            d_low = data[('Low', t_sa)]
+                            d_close = dataY[('Close', t_sa)]
+                            d_today_h = dataY[('High', t_sa)]
+                        if choice == 0:
+                            high = [float('%.2f' % d_high[x]) for x in d_high]
+                            low = [float('%.2f' % d_low[x]) for x in d_low]
+                            avg = [(x+y)/2 for x, y in zip(*[high, low])]
+                            history_all[t] = [high, low, avg]
+                        elif choice == 2:
+                            low = [float('%.2f' % d_low[x]) for x in d_low]
+                            history_all[t] = low
+                        closing = float('%.2f' % d_close[-1])
+                        today_high = float('%.2f' % d_today_h[-1])
+                        c = 2
+                        while closing == 0 \
+                                or np.isnan(closing) \
+                                or str(closing) == 'nan':
+                            closing = float('%.2f' % d_close[-c])
+                            today_high = float('%.2f' % d_today_h[-c])
+                            c += 1
+                            if c == 10: break
+                        close_all[t] = [closing, today_high]
+                    except Exception as e:
+                        print('Error including EOD to array: ', t)
+                        print(e)
                 k += 1
             except Exception as e:
-                print('Error gathering EOD:')
+                print('Error gathering EOD through Yahooo API:')
                 print(e)
                 i = m
                 tm.sleep(2)
